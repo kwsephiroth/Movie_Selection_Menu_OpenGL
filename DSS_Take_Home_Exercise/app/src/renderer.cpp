@@ -30,8 +30,16 @@ static int total_images = 0;//temp
 			if (containers_arr_ptr->IsArray())
 			{
 				const auto& containers_arr = containers_arr_ptr->GetArray();
-				for (size_t i = 0; i < containers_arr.Size(); ++i)
+				for (size_t i = 0; i < containers_arr.Size(); ++i)//Iterate over outer most sets
 				{
+					std::string set_name_path = "/data/StandardCollection/containers/" + std::to_string(i) + "/set/text/title/full/set/default/content";
+					const auto set_name_ptr = rapidjson::GetValueByPointer(*_home_json_ptr, rapidjson::Pointer(set_name_path.c_str()));
+					if (!set_name_ptr || set_name_ptr->IsNull() || !set_name_ptr->IsString())
+						continue;//skip rest of iteration
+					Set dss_set;
+					dss_set.name = set_name_ptr->GetString();
+					//std::cout << "set name = " << set_name_ptr->GetString() << std::endl;
+
 					std::string items_arr_path = "/data/StandardCollection/containers/" + std::to_string(i) + "/set/items";
 					const auto items_arr_ptr = rapidjson::GetValueByPointer(*_home_json_ptr, rapidjson::Pointer(items_arr_path.c_str()));
 					if (items_arr_ptr && !items_arr_ptr->IsNull())
@@ -43,7 +51,7 @@ static int total_images = 0;//temp
 							for (size_t j = 0; j < items_arr.Size(); ++j)
 							{
 								std::string full_item_name_path = "/data/StandardCollection/containers/" + std::to_string(i) + "/set/items/" + std::to_string(j) +
-									"/image/tile/1.78";// / series / default / url";// / text / title / full / series / default / content";
+									"/image/tile/1.78";
 								
 								auto full_item_name_ptr = rapidjson::GetValueByPointer(*_home_json_ptr, rapidjson::Pointer(full_item_name_path.c_str()));
 
@@ -57,17 +65,23 @@ static int total_images = 0;//temp
 										if (full_item_name_ptr->IsString())
 										{
 											total_images++;
-											std::cout << "image url = " << full_item_name_ptr->GetString() << std::endl;
+											dss_set.tiles.push_back(full_item_name_ptr->GetString());
+											//std::cout << "image url = " << full_item_name_ptr->GetString() << std::endl;
 										}
 									}
 								}
 							}
 						}
 					}
-				}
+					_sets.push_back(std::move(dss_set));
+				}//sets
 			}
 		}
-		std::cout << "total item count = " << total_items << std::endl;
-		std::cout << "total image count = " << total_images << std::endl;
+		//std::cout << "total item count = " << total_items << std::endl;//temp
+		//std::cout << "total image count = " << total_images << std::endl;//temp
+		for (const auto& set : _sets)
+		{
+			std::cout << set.name << " : " << set.tiles.size() << " tiles" << std::endl;
+		}
 	}
 }
