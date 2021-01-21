@@ -17,7 +17,7 @@ namespace DSS
 	{
 		//Attempt to download api json using url
 		{
-			auto file_memory_ptr = curl_utils::download_file_to_memory(DSS_HOME_JSON_URL);
+			auto file_memory_ptr = curl_utils::download_file_to_memory(HOME_JSON_URL);
 			_home_json_ptr = Utils::get_rj_document(file_memory_ptr->memory);
 			assert(_home_json_ptr);
 		}
@@ -72,16 +72,37 @@ static int total_images = 0;//temp
 								}
 							}
 						}
+						_sets.push_back(std::move(dss_set));
 					}
-					_sets.push_back(std::move(dss_set));
+					else//This may be a ref set so check for ref id and construct ref set url
+					{
+						std::string ref_id_path = "/data/StandardCollection/containers/" + std::to_string(i) + "/set/refId";
+						const auto ref_id_ptr = rapidjson::GetValueByPointer(*_home_json_ptr, rapidjson::Pointer(ref_id_path.c_str()));
+						
+						if (!ref_id_ptr || ref_id_ptr->IsNull() || !ref_id_ptr->IsString())
+							continue;
+
+						Ref_Set_Info ref_set;
+						ref_set.name = std::move(dss_set.name);
+						ref_set.ref_set_url = DSS::REF_SETS_URL_PREFIX + std::string(ref_id_ptr->GetString()) + ".json";
+						_ref_sets_info.push_back(std::move(ref_set));
+					}
 				}//sets
 			}
 		}
 		//std::cout << "total item count = " << total_items << std::endl;//temp
 		//std::cout << "total image count = " << total_images << std::endl;//temp
+		std::cout << "SETS" << std::endl;
 		for (const auto& set : _sets)
 		{
 			std::cout << set.name << " : " << set.tiles.size() << " tiles" << std::endl;
 		}
+		std::cout << std::endl;
+		std::cout << "REF SET INFO" << std::endl;
+		for (const auto& ref_set_info : _ref_sets_info)
+		{
+			std::cout << "name: " << ref_set_info.name << "\nurl: " << ref_set_info.ref_set_url << "\n\n";
+		}
+
 	}
 }

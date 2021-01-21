@@ -3,7 +3,7 @@
 
 namespace DSS
 {
-	static const char * DSS_HOME_JSON_URL = "https://cd-static.bamgrid.com/dp-117731241344/home.json";
-	static const char* DSS_REF_SETS_URL = "https://cd-static.bamgrid.com/dp-117731241344/sets/";
+	static const char * HOME_JSON_URL = "https://cd-static.bamgrid.com/dp-117731241344/home.json";
+	static const char* REF_SETS_URL_PREFIX = "https://cd-static.bamgrid.com/dp-117731241344/sets/";
 }
 #endif
