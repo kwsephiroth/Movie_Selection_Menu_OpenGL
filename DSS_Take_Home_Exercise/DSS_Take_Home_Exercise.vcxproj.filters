@@ -24,6 +24,9 @@
     <ClCompile Include="app\include\curl_utils.h">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="app\src\renderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="app\include\shader.h">
@@ -36,6 +39,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="app\include\texture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="app\include\renderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
