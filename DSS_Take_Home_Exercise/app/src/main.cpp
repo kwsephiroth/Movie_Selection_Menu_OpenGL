@@ -7,10 +7,14 @@
 #include <glm\gtc\type_ptr.hpp> // glm::value_ptr
 #include <glm\gtc\matrix_transform.hpp> // glm::translate, glm::rotate, glm::scale, glm::perspective
 #include "utils.h"
-
+#include "curl_utils.h"
+#include "constants.h"
 
 int main(void)
 {
+    auto file_memory = download_file_to_memory(DSS::DSS_HOME_JSON_URL);
+    std::cout << std::string(file_memory->memory) << std::endl;
+    //download_file_to_disk(DSS::DSS_HOME_JSON_URL, "home.json");
     //auto rj_doc_opt = DSS::get_json_doc_from_file("app/res/home.json");
     //if (!rj_doc_opt.has_value())
     //{
@@ -64,6 +68,7 @@ int main(void)
     //}
 
     //glfwTerminate();
+    std::cin.get();
     return 0;
 }
 

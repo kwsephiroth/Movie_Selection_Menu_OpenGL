@@ -37,8 +37,7 @@ struct MemoryStruct {
     size_t size;
 };
 
-static size_t
-WriteMemoryCallback(void* contents, size_t size, size_t nmemb, void* userp)
+static size_t WriteMemoryCallback(void* contents, size_t size, size_t nmemb, void* userp)
 {
     size_t realsize = size * nmemb;
     struct MemoryStruct* mem = (struct MemoryStruct*)userp;
@@ -58,13 +57,19 @@ WriteMemoryCallback(void* contents, size_t size, size_t nmemb, void* userp)
     return realsize;
 }
 
-std::unique_ptr<MemoryStruct> download_file_to_memory(const char* file_url)
+static size_t write_data(void* ptr, size_t size, size_t nmemb, void* stream)
+{
+    size_t written = fwrite(ptr, size, nmemb, (FILE*)stream);
+    return written;
+}
+
+static std::unique_ptr<MemoryStruct> download_file_to_memory(const char* file_url)
 {
     CURL* curl_handle;
     CURLcode res;
 
     //struct MemoryStruct chunk;
-    auto chunk = std::make_unique<MemoryStruct>(new MemoryStruct());
+    auto chunk = std::make_unique<MemoryStruct>();
 
     chunk->memory = (char*)malloc(1);  /* will be grown as needed by the realloc above */
     chunk->size = 0;    /* no data at this point */
@@ -81,7 +86,7 @@ std::unique_ptr<MemoryStruct> download_file_to_memory(const char* file_url)
     curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
 
     /* we pass our 'chunk' struct to the callback function */
-    curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void*)&(*chunk));//must dereference unique_ptr
+    curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void*)chunk.get());
 
     /* some servers don't like requests that are made without a user-agent
        field, so we provide one */
@@ -111,6 +116,51 @@ std::unique_ptr<MemoryStruct> download_file_to_memory(const char* file_url)
     curl_easy_cleanup(curl_handle);
 
     /* we're done with libcurl, so clean it up */
+    curl_global_cleanup();   
+
+    return chunk;
+}
+
+static void download_file_to_disk(const char* file_url, const char* out_file_name)
+{
+    CURL* curl_handle;
+    const char* pagefilename = out_file_name;
+    FILE* pagefile;
+
+    curl_global_init(CURL_GLOBAL_ALL);
+
+    /* init the curl session */
+    curl_handle = curl_easy_init();
+
+    /* set URL to get here */
+    curl_easy_setopt(curl_handle, CURLOPT_URL, file_url);
+
+    /* Switch on full protocol/debug output while testing */
+    curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 1L);
+
+    /* disable progress meter, set to 0L to enable it */
+    curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 1L);
+
+    /* send all data to this function  */
+    curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_data);
+
+    /* open the file */
+    pagefile = fopen(pagefilename, "wb");
+    if (pagefile) {
+
+        /* write the page body to this file handle */
+        curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, pagefile);
+
+        /* get it! */
+        curl_easy_perform(curl_handle);
+
+        /* close the header file */
+        fclose(pagefile);
+    }
+
+    /* cleanup curl stuff */
+    curl_easy_cleanup(curl_handle);
+
     curl_global_cleanup();
 }
 #endif
