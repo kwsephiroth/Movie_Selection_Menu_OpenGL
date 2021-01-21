@@ -98,7 +98,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)third_party\rapidjson\include;$(SolutionDir)third_party\GLFW\include;$(SolutionDir)third_party\GLEW\include;$(SolutionDir)$(SolutionName)\app\include;$(SolutionDir)third_party\curl\include;$(SolutionDir)third_party\SOIL2\include;$(SolutionDir)third_party\GLM</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>Default</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -162,10 +162,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="app\include\curl_utils.h" />
     <ClCompile Include="app\src\main.cpp" />
+    <ClCompile Include="app\src\texture.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="app\include\helpers.h" />
+    <ClInclude Include="app\include\constants.h" />
+    <ClInclude Include="app\include\texture.h" />
+    <ClInclude Include="app\include\utils.h" />
+    <ClInclude Include="app\include\shader.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
