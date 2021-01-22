@@ -12,6 +12,22 @@ namespace DSS
 		}
 	}
 
+	Texture::~Texture()
+	{
+		glDeleteTextures(1, &_index);
+	}
+
+	void Texture::bind(unsigned int slot)
+	{
+		glActiveTexture(GL_TEXTURE0 + slot);
+	    glBindTexture(GL_TEXTURE_2D, _index);
+	}
+
+	void Texture::unbind()
+	{
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+
 	void Texture::load_texture()
 	{
 		glGenTextures(1, &_index);
@@ -26,5 +42,7 @@ namespace DSS
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _width, _height, 0, GL_RGB, GL_UNSIGNED_BYTE, _img_data_ptr.get());
 		glGenerateMipmap(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, 0); //Unbind texture when done, so we won't accidentily mess up our texture.
+		
+		//TODO: Determine if it's safe to free image data here.
 	}
 }

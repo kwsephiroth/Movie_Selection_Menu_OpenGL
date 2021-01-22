@@ -3,17 +3,40 @@
 
 namespace DSS
 {
-	Renderer::Renderer()
+	Renderer::Renderer(unsigned int shader_program_id,
+		unsigned int position_attrib_location,
+		unsigned int texture_coordinate_attrib_location)
 	{
-		init();
+		init(shader_program_id, position_attrib_location, texture_coordinate_attrib_location);
 	}
 
-	void Renderer::init()
+	Renderer::~Renderer()
+	{
+		// Properly de-allocate all resources once they've outlived their purpose
+		glDeleteVertexArrays(1, &_vao);
+		glDeleteBuffers(1, &_tile_vbo);
+	}
+
+	void Renderer::draw_menu()
+	{
+		_sets[0].tiles[0].texture->bind(1);
+		//glUniformMatrix4fv(this->transformUniformLocation, 1, GL_FALSE, glm::value_ptr(this->transform)); //Apply any transformations first
+		glBindVertexArray(_vao);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		glBindVertexArray(0);
+		glActiveTexture(0);
+		_sets[0].tiles[0].texture->unbind();
+	}
+
+	void Renderer::init(unsigned int shader_program_id,
+		unsigned int position_attrib_location,
+		unsigned int texture_coordinate_attrib_location)
 	{
 		//TODO: Determine if this function should throw an exception if it fails to initialize the object state.
 		load_homepage_api_json();
 		if (_home_json_ptr)
 		{
+			setup_vao(position_attrib_location, texture_coordinate_attrib_location);
 			load_textures();
 		}
 	}
@@ -121,6 +144,35 @@ namespace DSS
 		//}
 	}
 
+	void Renderer::init_tile_vertices()//initial tile quad
+	{
+		_tile_vertices[0] = { {-0.5f, -0.5f}, {0.0f, 0.0f} };//lower left
+		_tile_vertices[1] = { {0.5f, -0.5f}, {1.0f, 0.0f} };//lower right
+		_tile_vertices[2] = { {0.5f, 0.5f}, {0.0f, 1.0f} };//upper left
+		_tile_vertices[3] = { {-0.5f, 0.5f}, {1.0f, 1.0f} };//upper right
+	}
+
+	void Renderer::setup_vao(const GLuint position_attrib_location, const GLuint texture_attrib_location)
+	{
+		init_tile_vertices();
+
+		glGenVertexArrays(1, &_vao);
+		glGenBuffers(1, &_tile_vbo);
+
+		// Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
+		glBindVertexArray(_vao);
+		glBindBuffer(GL_ARRAY_BUFFER, _tile_vbo);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(_tile_vertices), _tile_vertices, GL_STATIC_DRAW);
+		glVertexAttribPointer(position_attrib_location, 2, GL_FLOAT, GL_FALSE, sizeof(_tile_vertices[0]), (GLvoid*)0); //position
+		glVertexAttribPointer(texture_attrib_location, 2, GL_FLOAT, GL_FALSE, sizeof(_tile_vertices[0]), (GLvoid*)(2 * sizeof(GLfloat))); //texture coordinates
+
+		//Enable attributes
+		glEnableVertexAttribArray(position_attrib_location); //position
+		glEnableVertexAttribArray(texture_attrib_location); //texture coordinates
+
+		glBindVertexArray(0);
+	}
+
 	void Renderer::load_textures()
 	{
 		//int j = 1;
@@ -155,6 +207,7 @@ namespace DSS
 				}
 				//out_image.close();
 				//++j;
+				return;//temp - just download one file
 				
 			}
 		}

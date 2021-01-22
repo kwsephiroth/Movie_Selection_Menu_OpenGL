@@ -10,21 +10,21 @@
 
 namespace
 {
-    static unsigned int renderingProgram;
+    static unsigned int rendering_program;
     static int width, height;
     static float aspect;
     static glm::mat4 pMat;
     static bool keys[1024];
-    static unsigned int positionAttribLocation;
-    static unsigned int textureAttribLocation;
+    static unsigned int position_attrib_location;
+    static unsigned int texture_attrib_location;
 }
 
 static void init(GLFWwindow* window)
 {
     DSS::Shader shader("res/shaders/vertex_shader.glsl", "res/shaders/fragment_shader.glsl");
-    renderingProgram = shader.Program;
-    positionAttribLocation = glGetAttribLocation(renderingProgram, "position");
-    textureAttribLocation = glGetAttribLocation(renderingProgram, "tex_coord");
+    rendering_program = shader.Program;
+    position_attrib_location = glGetAttribLocation(rendering_program, "pos");
+    texture_attrib_location = glGetAttribLocation(rendering_program, "texCoord");
     glfwGetFramebufferSize(window, &width, &height);
     aspect = (float)width / (float)height;
     pMat = glm::perspective(1.0472f, aspect, 0.1f, 1000.0f);
@@ -87,13 +87,15 @@ int main(void)
     glfwSetKeyCallback(window, key_callback);
     glfwSetWindowSizeCallback(window, window_size_callback);
 
-    DSS::Renderer renderer;
+    DSS::Renderer renderer(rendering_program, position_attrib_location, texture_attrib_location);
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
         glClearColor(0, 0, 255, 1);
         glClear(GL_COLOR_BUFFER_BIT);
+
+        renderer.draw_menu();
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);

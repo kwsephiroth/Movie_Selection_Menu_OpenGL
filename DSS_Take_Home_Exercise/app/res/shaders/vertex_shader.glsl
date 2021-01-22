@@ -7,6 +7,7 @@ out vec2 tc;
 layout (binding=0) uniform sampler2D samp;
 
 void main(void)
-{	gl_Position = vec4(pos,1.0);
+{	
+    gl_Position = vec4(pos,1.0);
 	tc = texCoord;
 } 

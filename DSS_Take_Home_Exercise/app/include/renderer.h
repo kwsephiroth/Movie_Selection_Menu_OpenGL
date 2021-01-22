@@ -35,6 +35,12 @@ namespace DSS
 		std::string ref_set_url;
 	};
 
+	struct Vertex
+	{
+		GLfloat position[2];//x,y
+		GLfloat textureCoordinates[2];//u,v
+	};
+
 	class Renderer//TODO: Determine if this will need to be a singleton class.
 	{
 	private:
@@ -42,14 +48,32 @@ namespace DSS
 		std::vector<Set> _sets;
 		std::vector<Ref_Set_Info> _ref_sets_info;
 		bool _initialized = false;
+		Vertex _tile_vertices[4];
+		GLuint _vao;
+		GLuint _tile_vbo;
+		unsigned int _shader_program_id;
+		unsigned int _position_attrib_location;
+		unsigned int _texture_coord_attrib_location;
 
-		void init();
+		void init(unsigned int shader_program_id,
+			unsigned int position_attrib_location,
+			unsigned int texture_coordinate_attrib_location);
+
 		void load_textures();
 		void load_homepage_api_json();
+		void init_tile_vertices();
+		void init_menu_grid();
+		void setup_vao(const GLuint position_attrib_location, const GLuint texture_attrib_location);
 
 	public:
-		Renderer();
+		Renderer(unsigned int shader_program_id,
+			unsigned int position_attrib_location,
+			unsigned int texture_coordinate_attrib_location);
+
+		~Renderer();
 		bool get_is_initialized() const { return _initialized; }
+		void draw_menu();
+		GLuint get_vao() const { return _vao; }
 	};
 }
 #endif
