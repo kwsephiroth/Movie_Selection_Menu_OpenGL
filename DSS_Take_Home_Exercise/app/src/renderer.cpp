@@ -143,13 +143,13 @@ namespace DSS
 					int width = tile.image_width;
 					int height = tile.image_height;
 					int channels = 0;
-					std::unique_ptr<unsigned char> image_buffer_ptr(SOIL_load_image_from_memory((const unsigned char*)file_memory_ptr->memory,
+					std::unique_ptr<unsigned char> image_buffer_ptr(SOIL_load_image_from_memory((const unsigned char*)file_memory_ptr->memory, //Encapsulate raw ptr in unique ptr to avoid memory leak
 						file_memory_ptr->size,
 						&width,
 						&height,
 						&channels,
 						SOIL_LOAD_AUTO));
-					//SOIL_save_image(out_file_name.c_str(), SOIL_SAVE_TYPE_PNG, width, height, channels, image_buffer);
+					//SOIL_save_image(out_file_name.c_str(), SOIL_SAVE_TYPE_PNG, width, height, channels, image_buffer_ptr.get());
 					tile.texture.reset( new Texture(std::move(image_buffer_ptr), width, height ));
 				}
 				//out_image.close();
