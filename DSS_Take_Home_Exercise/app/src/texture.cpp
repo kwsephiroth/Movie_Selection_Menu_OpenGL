@@ -26,6 +26,5 @@ namespace DSS
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _width, _height, 0, GL_RGB, GL_UNSIGNED_BYTE, _img_data_ptr.get());
 		glGenerateMipmap(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, 0); //Unbind texture when done, so we won't accidentily mess up our texture.
-		std::cout << "Generated texture id " << _index << std::endl;
 	}
 }

@@ -137,6 +137,7 @@ namespace DSS
 					return;
 				}*/
 				//std::cout << "downloading image from " << tile.image_url << std::endl;
+				std::cout << "Loading texture for file @ " << tile.image_url << std::endl;
 				auto file_memory_ptr = curl_utils::download_file_to_memory(tile.image_url.c_str());
 				if (file_memory_ptr)
 				{
