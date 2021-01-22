@@ -1,4 +1,5 @@
 #include "renderer.h"
+#include <iostream>//temp
 
 namespace DSS
 {
@@ -122,31 +123,37 @@ namespace DSS
 
 	void Renderer::load_textures()
 	{
-		int j = 1;
+		//int j = 1;
 		for (auto& set : _sets)
 		{	
 			for (auto& tile : set.tiles)
 			{
 				//TODO: Use image url and curl to load tile images into memory.
-				std::string out_file_name = "image" + std::to_string(j) + ".png";
+				//std::string out_file_name = "image" + std::to_string(j) + ".png";
 				//std::ofstream out_image(out_file_name, std::ios::binary);
 				/*if (!out_image.good())
 				{
 					std::cout << "Failed to open image output file." << std::endl;
 					return;
 				}*/
-				std::cout << "downloading image from " << tile.image_url << std::endl;
+				//std::cout << "downloading image from " << tile.image_url << std::endl;
 				auto file_memory_ptr = curl_utils::download_file_to_memory(tile.image_url.c_str());
 				if (file_memory_ptr)
 				{
 					int width = tile.image_width;
 					int height = tile.image_height;
 					int channels = 0;
-					auto image_buffer = SOIL_load_image_from_memory((const unsigned char*)file_memory_ptr->memory, file_memory_ptr->size, &width, &height, &channels, SOIL_LOAD_AUTO);
+					std::unique_ptr<unsigned char> image_buffer_ptr(SOIL_load_image_from_memory((const unsigned char*)file_memory_ptr->memory,
+						file_memory_ptr->size,
+						&width,
+						&height,
+						&channels,
+						SOIL_LOAD_AUTO));
 					//SOIL_save_image(out_file_name.c_str(), SOIL_SAVE_TYPE_PNG, width, height, channels, image_buffer);
+					tile.texture.reset( new Texture(std::move(image_buffer_ptr), width, height ));
 				}
 				//out_image.close();
-				++j;
+				//++j;
 				
 			}
 		}

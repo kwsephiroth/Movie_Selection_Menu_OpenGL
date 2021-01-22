@@ -4,6 +4,7 @@
 #include <SOIL2/SOIL2.h>
 #include <string>
 #include <vector>
+#include <memory>
 
 namespace DSS
 {
@@ -15,12 +16,12 @@ namespace DSS
 		GLuint _index;
 		std::string _image_file_path;
 		unsigned char* _image = nullptr; //Raw pointer!!! Either eliminate, write custom copy constructor and assignment operator, or disable copying
+		std::unique_ptr<unsigned char> _img_data_ptr;
 
 		void load_texture();
 
 	public:
-		Texture(const std::string& image_file_path);
-		Texture(char* image_data, unsigned int width, unsigned int height);
+		Texture(std::unique_ptr<unsigned char> img_data_ptr, int width, int height);
 		GLuint get_index() const { return _index; }
 		int get_height() const { return _height; }
 		int get_width() const { return _width; }

@@ -103,16 +103,16 @@ namespace curl_utils
                 curl_easy_strerror(res));
             return nullptr;
         }
-        else {
-            /*
-             * Now, our chunk.memory points to a memory block that is chunk.size
-             * bytes big and contains the remote file.
-             *
-             * Do something nice with it!
-             */
+        //else {
+        //    /*
+        //     * Now, our chunk.memory points to a memory block that is chunk.size
+        //     * bytes big and contains the remote file.
+        //     *
+        //     * Do something nice with it!
+        //     */
 
-            printf("%lu bytes retrieved\n", (unsigned long)chunk->size);
-        }
+        //    printf("%lu bytes retrieved\n", (unsigned long)chunk->size);
+        //}
 
         /* cleanup curl stuff */
         curl_easy_cleanup(curl_handle);
