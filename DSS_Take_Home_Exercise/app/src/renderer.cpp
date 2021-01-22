@@ -143,7 +143,7 @@ namespace DSS
 					int height = tile.image_height;
 					int channels = 0;
 					auto image_buffer = SOIL_load_image_from_memory((const unsigned char*)file_memory_ptr->memory, file_memory_ptr->size, &width, &height, &channels, SOIL_LOAD_AUTO);
-					SOIL_save_image(out_file_name.c_str(), SOIL_SAVE_TYPE_PNG, width, height, channels, image_buffer);
+					//SOIL_save_image(out_file_name.c_str(), SOIL_SAVE_TYPE_PNG, width, height, channels, image_buffer);
 				}
 				//out_image.close();
 				++j;
