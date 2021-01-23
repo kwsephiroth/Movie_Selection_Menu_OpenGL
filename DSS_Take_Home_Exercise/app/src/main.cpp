@@ -138,9 +138,14 @@ static void process_controller_input(DSS::Renderer& renderer)
     }
 }
 
-
 int main(void)
 {
+    #ifdef WIN32
+        #if not defined(_DEBUG)
+            FreeConsole();
+        #endif
+    #endif
+
     GLFWwindow* window;
 
     /* Initialize the library */
