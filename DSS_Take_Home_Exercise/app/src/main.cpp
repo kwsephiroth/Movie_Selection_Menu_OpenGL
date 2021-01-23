@@ -21,7 +21,7 @@ namespace
 
 static void init(GLFWwindow* window)
 {
-    DSS::Shader shader("res/shaders/vertex_shader.glsl", "res/shaders/fragment_shader.glsl");
+    DSS::Shader shader("app/res/shaders/vertex_shader.glsl", "app/res/shaders/fragment_shader.glsl");
     rendering_program = shader.Program;
     position_attrib_location = glGetAttribLocation(rendering_program, "pos");
     texture_attrib_location = glGetAttribLocation(rendering_program, "texCoord");
@@ -87,6 +87,8 @@ int main(void)
     glfwSetKeyCallback(window, key_callback);
     glfwSetWindowSizeCallback(window, window_size_callback);
 
+    init(window);
+
     DSS::Renderer renderer(rendering_program, position_attrib_location, texture_attrib_location);
 
     /* Loop until the user closes the window */
@@ -96,6 +98,11 @@ int main(void)
         glClear(GL_COLOR_BUFFER_BIT);
 
         renderer.draw_menu();
+
+        while (GLenum error = glGetError())
+        {
+            std::cout << "[OpenGL Error] (" << error << ") " << std::endl;
+        }
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);

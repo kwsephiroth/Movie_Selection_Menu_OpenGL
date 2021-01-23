@@ -11,6 +11,7 @@
 #include <vector>
 #include <unordered_map>
 #include <fstream>
+#include <glm/glm.hpp>
 #include "texture.h"
 
 namespace DSS
@@ -18,8 +19,8 @@ namespace DSS
 	struct Tile
 	{
 		std::string image_url;
-		int image_width;
-		int image_height;
+		int master_width;
+		int master_height;		
 		std::unique_ptr<Texture> texture = nullptr;
 	};
 	
@@ -37,8 +38,8 @@ namespace DSS
 
 	struct Vertex
 	{
-		GLfloat position[2];//x,y
-		GLfloat textureCoordinates[2];//u,v
+		glm::vec3 position;
+		glm::vec2 texCoord;
 	};
 
 	class Renderer//TODO: Determine if this will need to be a singleton class.
@@ -48,27 +49,25 @@ namespace DSS
 		std::vector<Set> _sets;
 		std::vector<Ref_Set_Info> _ref_sets_info;
 		bool _initialized = false;
-		Vertex _tile_vertices[4];
 		GLuint _vao;
-		GLuint _tile_vbo;
+		GLuint _tile_pos_vbo;
+		GLuint _tile_tex_vbo;
+		//Vertex _tile_vertices[4];
 		unsigned int _shader_program_id;
 		unsigned int _position_attrib_location;
 		unsigned int _texture_coord_attrib_location;
 
-		void init(unsigned int shader_program_id,
-			unsigned int position_attrib_location,
-			unsigned int texture_coordinate_attrib_location);
+		void init();
 
 		void load_textures();
 		void load_homepage_api_json();
-		void init_tile_vertices();
+		void init_meshes();
 		void init_menu_grid();
-		void setup_vao(const GLuint position_attrib_location, const GLuint texture_attrib_location);
 
 	public:
 		Renderer(unsigned int shader_program_id,
 			unsigned int position_attrib_location,
-			unsigned int texture_coordinate_attrib_location);
+			unsigned int texture_coord_attrib_location);
 
 		~Renderer();
 		bool get_is_initialized() const { return _initialized; }

@@ -5,40 +5,65 @@ namespace DSS
 {
 	Renderer::Renderer(unsigned int shader_program_id,
 		unsigned int position_attrib_location,
-		unsigned int texture_coordinate_attrib_location)
+		unsigned int texture_coordinate_attrib_location) :
+		_shader_program_id(shader_program_id),
+		_position_attrib_location(position_attrib_location),
+		_texture_coord_attrib_location(texture_coordinate_attrib_location)
 	{
-		init(shader_program_id, position_attrib_location, texture_coordinate_attrib_location);
+		init();
 	}
 
 	Renderer::~Renderer()
 	{
-		// Properly de-allocate all resources once they've outlived their purpose
-		glDeleteVertexArrays(1, &_vao);
-		glDeleteBuffers(1, &_tile_vbo);
 	}
 
-	void Renderer::draw_menu()
-	{
-		_sets[0].tiles[0].texture->bind(1);
-		//glUniformMatrix4fv(this->transformUniformLocation, 1, GL_FALSE, glm::value_ptr(this->transform)); //Apply any transformations first
-		glBindVertexArray(_vao);
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-		glBindVertexArray(0);
-		glActiveTexture(0);
-		_sets[0].tiles[0].texture->unbind();
-	}
-
-	void Renderer::init(unsigned int shader_program_id,
-		unsigned int position_attrib_location,
-		unsigned int texture_coordinate_attrib_location)
+	void Renderer::init()
 	{
 		//TODO: Determine if this function should throw an exception if it fails to initialize the object state.
 		load_homepage_api_json();
 		if (_home_json_ptr)
 		{
-			setup_vao(position_attrib_location, texture_coordinate_attrib_location);
+			//Generate Vertex Array Object
+			glGenVertexArrays(1, &_vao);
+			glBindVertexArray(_vao);
+			
 			load_textures();
+			//init_meshes();
+			
+			float tile_positions[12] = {
+			   -0.5f,  -0.5f, 0.0f, 
+				0.5f,  -0.5f, 0.0f,
+				0.5f, 0.5f, 0.0f,
+			   -0.5f, 0.5f, 0.0f
+			};
+
+			float tile_tex_coords[8] = {
+				0.0f, 1.0f,
+				1.0f, 1.0f,
+				1.0f, 0.0f,
+				0.0f, 0.0f
+			};
+			
+			//Generate Vertex Buffer Objects
+			glGenBuffers(1, &_tile_pos_vbo);
+			glBindBuffer(GL_ARRAY_BUFFER, _tile_pos_vbo);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(tile_positions), tile_positions, GL_STATIC_DRAW);
+
+			glGenBuffers(1, &_tile_tex_vbo);
+			glBindBuffer(GL_ARRAY_BUFFER, _tile_tex_vbo);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(tile_tex_coords), tile_tex_coords, GL_STATIC_DRAW);
+
+			glBindVertexArray(0);
 		}
+	}
+
+	void Renderer::init_meshes()
+	{
+		//Tile Quad
+		//_tile_vertices[0] = { { -0.5f, -0.5f, +0.0f }, { +0.0f, +0.0f } };//lower left
+		//_tile_vertices[1] = { {  0.5f, -0.5f, +0.0f }, { +1.0f, +0.0f } };//lower right
+		//_tile_vertices[2] = { { -0.5f,  0.5f, +0.0f }, { +0.0f, +1.0f } };//upper left
+		//_tile_vertices[3] = { {  0.5f,  0.5f, +0.0f }, { +1.0f, +1.0f } };//upper right
 	}
 
 	void Renderer::load_homepage_api_json()
@@ -129,48 +154,6 @@ namespace DSS
 				}//sets
 			}
 		}
-		//std::cout << "total item count = " << total_items << std::endl;//temp
-		//std::cout << "total image count = " << total_images << std::endl;//temp
-		//std::cout << "SETS" << std::endl;
-		//for (const auto& set : _sets)
-		//{
-		//	std::cout << set.name << " : " << set.tiles.size() << " tiles" << std::endl;
-		//}
-		//std::cout << std::endl;
-		//std::cout << "REF SET INFO" << std::endl;
-		//for (const auto& ref_set_info : _ref_sets_info)
-		//{
-		//	std::cout << "name: " << ref_set_info.name << "\nurl: " << ref_set_info.ref_set_url << "\n\n";
-		//}
-	}
-
-	void Renderer::init_tile_vertices()//initial tile quad
-	{
-		_tile_vertices[0] = { {-0.5f, -0.5f}, {0.0f, 0.0f} };//lower left
-		_tile_vertices[1] = { {0.5f, -0.5f}, {1.0f, 0.0f} };//lower right
-		_tile_vertices[2] = { {0.5f, 0.5f}, {0.0f, 1.0f} };//upper left
-		_tile_vertices[3] = { {-0.5f, 0.5f}, {1.0f, 1.0f} };//upper right
-	}
-
-	void Renderer::setup_vao(const GLuint position_attrib_location, const GLuint texture_attrib_location)
-	{
-		init_tile_vertices();
-
-		glGenVertexArrays(1, &_vao);
-		glGenBuffers(1, &_tile_vbo);
-
-		// Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
-		glBindVertexArray(_vao);
-		glBindBuffer(GL_ARRAY_BUFFER, _tile_vbo);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(_tile_vertices), _tile_vertices, GL_STATIC_DRAW);
-		glVertexAttribPointer(position_attrib_location, 2, GL_FLOAT, GL_FALSE, sizeof(_tile_vertices[0]), (GLvoid*)0); //position
-		glVertexAttribPointer(texture_attrib_location, 2, GL_FLOAT, GL_FALSE, sizeof(_tile_vertices[0]), (GLvoid*)(2 * sizeof(GLfloat))); //texture coordinates
-
-		//Enable attributes
-		glEnableVertexAttribArray(position_attrib_location); //position
-		glEnableVertexAttribArray(texture_attrib_location); //texture coordinates
-
-		glBindVertexArray(0);
 	}
 
 	void Renderer::load_textures()
@@ -181,7 +164,7 @@ namespace DSS
 			for (auto& tile : set.tiles)
 			{
 				//TODO: Use image url and curl to load tile images into memory.
-				//std::string out_file_name = "image" + std::to_string(j) + ".png";
+				//std::string out_file_name = "image" + std::to_string(j) + ".jpeg";
 				//std::ofstream out_image(out_file_name, std::ios::binary);
 				/*if (!out_image.good())
 				{
@@ -193,17 +176,19 @@ namespace DSS
 				auto file_memory_ptr = curl_utils::download_file_to_memory(tile.image_url.c_str());
 				if (file_memory_ptr)
 				{
-					int width = tile.image_width;
-					int height = tile.image_height;
+					int width = 0;
+					int height = 0;
 					int channels = 0;
-					std::unique_ptr<unsigned char> image_buffer_ptr(SOIL_load_image_from_memory((const unsigned char*)file_memory_ptr->memory, //Encapsulate raw ptr in unique ptr to avoid memory leak
+					std::unique_ptr<unsigned char> image_buffer_ptr(SOIL_load_image_from_memory((const unsigned char*)file_memory_ptr->memory,
 						file_memory_ptr->size,
 						&width,
 						&height,
 						&channels,
 						SOIL_LOAD_AUTO));
-					//SOIL_save_image(out_file_name.c_str(), SOIL_SAVE_TYPE_PNG, width, height, channels, image_buffer_ptr.get());
+					//SOIL_save_image(out_file_name.c_str(), SOIL_SAVE_TYPE_JPG, width, height, channels, image_buffer_ptr.get());
 					tile.texture.reset( new Texture(std::move(image_buffer_ptr), width, height ));
+					std::cout << "width = " << width << " , height = " << height << " , tile.master_width = " << tile.master_width << " , tile.master_height = " << tile.master_height
+						<< " , channels = " << channels << std::endl;
 				}
 				//out_image.close();
 				//++j;
@@ -211,5 +196,26 @@ namespace DSS
 				
 			}
 		}
+	}
+
+	void Renderer::draw_menu()
+	{
+		glUseProgram(_shader_program_id);
+
+		glBindVertexArray(_vao);
+		glBindBuffer(GL_ARRAY_BUFFER, _tile_pos_vbo);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(0);
+
+		glBindBuffer(GL_ARRAY_BUFFER, _tile_tex_vbo);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(1);
+
+		//glEnable(GL_TEXTURE_2D);
+		_sets[0].tiles[0].texture->bind(0);
+		glDrawArrays(GL_QUADS, 0, 4);
+		_sets[0].tiles[0].texture->unbind();
+
+		glBindVertexArray(0);
 	}
 }
