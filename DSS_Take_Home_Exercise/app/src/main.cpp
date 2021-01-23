@@ -30,7 +30,13 @@ namespace
 
 static void init(GLFWwindow* window)
 {
-    DSS::Shader shader("app/res/shaders/vertex_shader.glsl", "app/res/shaders/fragment_shader.glsl");
+    const std::string vShaderSource =
+        #include "../res/shaders/vertex_shader.glsl"
+        ;
+    const std::string fShaderSource =
+        #include "../res/shaders/fragment_shader.glsl"
+        ;
+    DSS::Shader shader(vShaderSource.c_str(), fShaderSource.c_str());
     rendering_program = shader.Program;
     position_attrib_location = glGetAttribLocation(rendering_program, "pos");
     texture_attrib_location = glGetAttribLocation(rendering_program, "texCoord");

@@ -16,8 +16,14 @@ namespace DSS
 	{
 	public:
 		GLuint Program;
+
+		Shader(const char* vShaderCode, const char* fShaderCode)
+		{
+			compile_shaders(vShaderCode, fShaderCode);
+		}
+
 		// Constructor generates the shader on the fly
-		Shader(const GLchar* vertexPath, const GLchar* fragmentPath)
+		/*Shader(const char* vertexPath, const char* fragmentPath)
 		{
 			// 1. Retrieve the vertex/fragment source code from filePath
 			std::string vertexCode;
@@ -61,7 +67,12 @@ namespace DSS
 			}
 			const GLchar* vShaderCode = vertexCode.c_str();
 			const GLchar* fShaderCode = fragmentCode.c_str();
-			// 2. Compile shaders
+			compile_shaders(vShaderCode, fShaderCode);
+		}*/
+
+		void compile_shaders(const char* vShaderCode, const char* fShaderCode)
+		{
+			//Compile shaders
 			GLuint vertex, fragment;
 			GLint success;
 			GLchar infoLog[512];
@@ -103,8 +114,8 @@ namespace DSS
 			// Delete the shaders as they're linked into our program now and no longer necessery
 			glDeleteShader(vertex);
 			glDeleteShader(fragment);
-
 		}
+
 		// Uses the current shader
 		void Use()
 		{

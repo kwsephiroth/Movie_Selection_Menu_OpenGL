@@ -1,3 +1,4 @@
+R"(
 #version 430
 
 in vec2 tc;
@@ -11,3 +12,4 @@ void main(void)
 {	
   color = texture(samp, tc);
 }
+)"
