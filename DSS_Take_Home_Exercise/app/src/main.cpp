@@ -52,6 +52,33 @@ static void window_size_callback(GLFWwindow* win, int newWidth, int newHeight) {
     pMat = glm::perspective(1.0472f, aspect, 0.1f, 1000.0f);
 }
 
+static void resize_callback(GLFWwindow* window, int width, int height)
+{
+    glViewport(0, 0, width, height);
+}
+
+static void process_controller_input(DSS::Renderer& renderer)
+{
+    using namespace DSS;
+    if (keys[GLFW_KEY_W])
+    {
+        renderer.process_controller_input(ControllerInput::UP);
+    }
+    if (keys[GLFW_KEY_S])
+    {
+        renderer.process_controller_input(ControllerInput::DOWN);
+    }
+    if (keys[GLFW_KEY_A])
+    {
+        renderer.process_controller_input(ControllerInput::LEFT);
+    }
+    if (keys[GLFW_KEY_D])
+    {
+        renderer.process_controller_input(ControllerInput::RIGHT);
+    }
+
+}
+
 
 int main(void)
 {
@@ -79,9 +106,9 @@ int main(void)
         /* Problem: glewInit failed, something is seriously wrong. */
         fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
     }
-    fprintf(stdout, "Status: Using GLEW %s\n", glewGetString(GLEW_VERSION));
+    //fprintf(stdout, "Status: Using GLEW %s\n", glewGetString(GLEW_VERSION));
 
-    std::cout << glGetString(GL_VERSION) << std::endl;
+   // std::cout << glGetString(GL_VERSION) << std::endl;
 
     //Set up callback functions to capture and respond to events
     glfwSetKeyCallback(window, key_callback);
@@ -94,21 +121,24 @@ int main(void)
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
+        //Check and call events
+        glfwPollEvents(); //Any pressed keys will be recorded
+
+        //Process any controller inputs
+        process_controller_input(renderer);
+
         glClearColor(0, 0, 255, 1);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        renderer.draw_menu();
+        renderer.draw_home_page();
 
-        while (GLenum error = glGetError())
-        {
-            std::cout << "[OpenGL Error] (" << error << ") " << std::endl;
-        }
+        //while (GLenum error = glGetError())
+        //{
+        //    std::cout << "[OpenGL Error] (" << error << ") " << std::endl;
+        //}
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
-
-        /* Poll for and process events */
-        glfwPollEvents();
     }
 
     glfwTerminate();

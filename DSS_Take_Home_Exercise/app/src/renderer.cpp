@@ -19,6 +19,7 @@ namespace DSS
 
 	void Renderer::init()
 	{
+		std::cout << "Initializing homepage ...." << std::endl;
 		//TODO: Determine if this function should throw an exception if it fails to initialize the object state.
 		load_homepage_api_json();
 		if (_home_json_ptr)
@@ -31,10 +32,10 @@ namespace DSS
 			//init_meshes();
 			
 			float tile_positions[12] = {
-			   -0.5f,  -0.5f, 0.0f, 
-				0.5f,  -0.5f, 0.0f,
-				0.5f, 0.5f, 0.0f,
-			   -0.5f, 0.5f, 0.0f
+			   -0.5f,  -0.5f, 0.0f, //lower left
+				0.5f,  -0.5f, 0.0f, //lower right
+				0.5f, 0.5f, 0.0f,   //upper right
+			   -0.5f, 0.5f, 0.0f    //upper left
 			};
 
 			float tile_tex_coords[8] = {
@@ -55,15 +56,12 @@ namespace DSS
 
 			glBindVertexArray(0);
 		}
+		std::cout << "Home page initialized!" << std::endl;
+		std::cout << "Rendering home page ... " << std::endl;
 	}
 
 	void Renderer::init_meshes()
 	{
-		//Tile Quad
-		//_tile_vertices[0] = { { -0.5f, -0.5f, +0.0f }, { +0.0f, +0.0f } };//lower left
-		//_tile_vertices[1] = { {  0.5f, -0.5f, +0.0f }, { +1.0f, +0.0f } };//lower right
-		//_tile_vertices[2] = { { -0.5f,  0.5f, +0.0f }, { +0.0f, +1.0f } };//upper left
-		//_tile_vertices[3] = { {  0.5f,  0.5f, +0.0f }, { +1.0f, +1.0f } };//upper right
 	}
 
 	void Renderer::load_homepage_api_json()
@@ -172,7 +170,7 @@ namespace DSS
 					return;
 				}*/
 				//std::cout << "downloading image from " << tile.image_url << std::endl;
-				std::cout << "Loading texture for file @ " << tile.image_url << std::endl;
+				//std::cout << "Loading texture for file @ " << tile.image_url << std::endl;
 				auto file_memory_ptr = curl_utils::download_file_to_memory(tile.image_url.c_str());
 				if (file_memory_ptr)
 				{
@@ -185,37 +183,124 @@ namespace DSS
 						&height,
 						&channels,
 						SOIL_LOAD_AUTO));
+					
+					if (!image_buffer_ptr)
+					{
+						//std::cout << "image was null for url " << tile.image_url << " and size = " << file_memory_ptr->size << std::endl;
+						continue;
+					}
+
 					//SOIL_save_image(out_file_name.c_str(), SOIL_SAVE_TYPE_JPG, width, height, channels, image_buffer_ptr.get());
 					tile.texture.reset( new Texture(std::move(image_buffer_ptr), width, height ));
-					std::cout << "width = " << width << " , height = " << height << " , tile.master_width = " << tile.master_width << " , tile.master_height = " << tile.master_height
-						<< " , channels = " << channels << std::endl;
+					//std::cout << "width = " << width << " , height = " << height << " , tile.master_width = " << tile.master_width << " , tile.master_height = " << tile.master_height
+						//<< " , channels = " << channels << std::endl;
 				}
 				//out_image.close();
+				//if (j == 10) return;
 				//++j;
-				return;//temp - just download one file
+				//return;//temp - just download one file
 				
 			}
 		}
 	}
 
-	void Renderer::draw_menu()
+	void Renderer::draw_home_page()
 	{
 		glUseProgram(_shader_program_id);
 
+		static const float SIZE_OFFSET = 0.3;
+		static const float POS_OFFSET_X = -2.80;
+		static const float POS_OFFSET_Y = 2.3;
+
 		glBindVertexArray(_vao);
-		glBindBuffer(GL_ARRAY_BUFFER, _tile_pos_vbo);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-		glEnableVertexAttribArray(0);
+		
+		float pos_update_x = 0;
+		float pos_update_y = 0;
+		size_t rendered_tile_count = 0;
+		size_t i = 0;
 
-		glBindBuffer(GL_ARRAY_BUFFER, _tile_tex_vbo);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
-		glEnableVertexAttribArray(1);
+		while(rendered_tile_count != 5)
+		{
+			auto& current_tile = _sets[0].tiles[i];
+			current_tile.position = { pos_update_x, pos_update_y };
 
-		//glEnable(GL_TEXTURE_2D);
-		_sets[0].tiles[0].texture->bind(0);
-		glDrawArrays(GL_QUADS, 0, 4);
-		_sets[0].tiles[0].texture->unbind();
+			++i;
+			if (!current_tile.texture)//Ignore any tiles that weren't properly initialized
+			{
+				continue;
+			}
+			//TODO: Apply any transformations to tiles
+			glm::mat4 transform(1);//Initialize to identity matrix
+			transform = glm::scale(transform, glm::vec3(SIZE_OFFSET, SIZE_OFFSET, 0.0f));
+			transform = glm::translate(transform, glm::vec3(POS_OFFSET_X + pos_update_x, POS_OFFSET_Y + pos_update_y, 0.0f));
+			GLuint transLoc = glGetUniformLocation(_shader_program_id, "transform");
+			glUniformMatrix4fv(transLoc, 1, GL_FALSE, glm::value_ptr(transform));
+			//
 
+			glBindBuffer(GL_ARRAY_BUFFER, _tile_pos_vbo);
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+			glEnableVertexAttribArray(0);
+
+			glBindBuffer(GL_ARRAY_BUFFER, _tile_tex_vbo);
+			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+			glEnableVertexAttribArray(1);
+
+			//glEnable(GL_TEXTURE_2D);
+			current_tile.texture->bind(0);
+			glDrawArrays(GL_QUADS, 0, 4);
+			current_tile.texture->unbind();
+
+			pos_update_x += 1.4;
+			pos_update_y += 0;
+			++rendered_tile_count;
+		}
 		glBindVertexArray(0);
+	}
+
+	void Renderer::process_controller_input(const ControllerInput input)//TODO: Determine if this callback is thread-safe. this will update a current position member.
+	{
+		switch (input)
+		{
+			case ControllerInput::UP:
+			{
+
+			}
+			break;
+
+			case ControllerInput::DOWN:
+			{
+
+			}
+			break;
+
+			case ControllerInput::LEFT:
+			{
+
+			}
+			break;
+
+			case ControllerInput::RIGHT:
+			{
+
+			}
+			break;
+
+			//case ControllerInput::ENTER:
+			//{
+
+			//}
+			//break;
+
+			//case ControllerInput::BACK:
+			//{
+
+			//}
+			//break;
+
+			default:
+			{
+				std::cerr << "ERROR: Invalid controller input detected." << std::endl;
+			}
+		}
 	}
 }

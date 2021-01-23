@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <fstream>
 #include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include "texture.h"
 
 namespace DSS
@@ -22,6 +23,8 @@ namespace DSS
 		int master_width;
 		int master_height;		
 		std::unique_ptr<Texture> texture = nullptr;
+		bool selected = false;
+		glm::vec2 position;
 	};
 	
 	struct Set
@@ -42,6 +45,16 @@ namespace DSS
 		glm::vec2 texCoord;
 	};
 
+	enum class ControllerInput
+	{
+		UP,
+		DOWN,
+		LEFT,
+		RIGHT,
+		ENTER,
+		BACK
+	};
+
 	class Renderer//TODO: Determine if this will need to be a singleton class.
 	{
 	private:
@@ -56,9 +69,10 @@ namespace DSS
 		unsigned int _shader_program_id;
 		unsigned int _position_attrib_location;
 		unsigned int _texture_coord_attrib_location;
+		glm::mat4 _transform;
+		glm::vec2 _selected_position;
 
 		void init();
-
 		void load_textures();
 		void load_homepage_api_json();
 		void init_meshes();
@@ -71,7 +85,8 @@ namespace DSS
 
 		~Renderer();
 		bool get_is_initialized() const { return _initialized; }
-		void draw_menu();
+		void draw_home_page();
+		void process_controller_input(const ControllerInput);
 		GLuint get_vao() const { return _vao; }
 	};
 }
