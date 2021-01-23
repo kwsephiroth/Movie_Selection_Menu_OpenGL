@@ -217,42 +217,56 @@ namespace DSS
 		float pos_update_x = 0;
 		float pos_update_y = 0;
 		size_t rendered_tile_count = 0;
-		size_t i = 0;
+		size_t rendered_row_count = 0;
+		size_t row_index = 0;
+		size_t column_index = 0;
 
-		while(rendered_tile_count != 5)
+		while (rendered_row_count < 4 && row_index < _sets.size())//create 4 rows of tiles
 		{
-			auto& current_tile = _sets[0].tiles[i];
-			current_tile.position = { pos_update_x, pos_update_y };
-
-			++i;
-			if (!current_tile.texture)//Ignore any tiles that weren't properly initialized
+			while (rendered_tile_count < 5 && column_index < _sets[row_index].tiles.size())//create 5 columns of tiles
 			{
-				continue;
+				auto& current_tile = _sets[row_index].tiles[column_index];
+				current_tile.position = { pos_update_x, pos_update_y };
+				++column_index;
+				
+				if (!current_tile.texture)//Ignore any tiles that weren't properly initialized
+				{
+					continue;
+				}
+
+				//TODO: Apply any transformations to tiles
+				glm::mat4 transform(1);//Initialize to identity matrix
+				transform = glm::scale(transform, glm::vec3(SIZE_OFFSET, SIZE_OFFSET, 0.0f));
+				transform = glm::translate(transform, glm::vec3(POS_OFFSET_X + pos_update_x, POS_OFFSET_Y + pos_update_y, 0.0f));
+				GLuint transLoc = glGetUniformLocation(_shader_program_id, "transform");
+				glUniformMatrix4fv(transLoc, 1, GL_FALSE, glm::value_ptr(transform));
+				//
+
+				glBindBuffer(GL_ARRAY_BUFFER, _tile_pos_vbo);
+				glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+				glEnableVertexAttribArray(0);
+
+				glBindBuffer(GL_ARRAY_BUFFER, _tile_tex_vbo);
+				glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+				glEnableVertexAttribArray(1);
+
+				//glEnable(GL_TEXTURE_2D);
+				current_tile.texture->bind(0);
+				glDrawArrays(GL_QUADS, 0, 4);
+				current_tile.texture->unbind();
+
+				pos_update_x += 1.4;
+				++rendered_tile_count;
 			}
-			//TODO: Apply any transformations to tiles
-			glm::mat4 transform(1);//Initialize to identity matrix
-			transform = glm::scale(transform, glm::vec3(SIZE_OFFSET, SIZE_OFFSET, 0.0f));
-			transform = glm::translate(transform, glm::vec3(POS_OFFSET_X + pos_update_x, POS_OFFSET_Y + pos_update_y, 0.0f));
-			GLuint transLoc = glGetUniformLocation(_shader_program_id, "transform");
-			glUniformMatrix4fv(transLoc, 1, GL_FALSE, glm::value_ptr(transform));
-			//
 
-			glBindBuffer(GL_ARRAY_BUFFER, _tile_pos_vbo);
-			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-			glEnableVertexAttribArray(0);
+			//reset column counts
+			pos_update_x = 0;
+			rendered_tile_count = 0;
+			column_index = 0;
 
-			glBindBuffer(GL_ARRAY_BUFFER, _tile_tex_vbo);
-			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
-			glEnableVertexAttribArray(1);
-
-			//glEnable(GL_TEXTURE_2D);
-			current_tile.texture->bind(0);
-			glDrawArrays(GL_QUADS, 0, 4);
-			current_tile.texture->unbind();
-
-			pos_update_x += 1.4;
-			pos_update_y += 0;
-			++rendered_tile_count;
+			pos_update_y -= 1.4;
+			++rendered_row_count;
+			++row_index;
 		}
 		glBindVertexArray(0);
 	}

@@ -17,6 +17,13 @@ namespace
     static bool keys[1024];
     static unsigned int position_attrib_location;
     static unsigned int texture_attrib_location;
+    static glm::vec2 grid_offsets[4][5] =
+    {
+        {{0, 0}, {0, 0}, {0, 0}, {0, 0}},
+        {{0, 0}, {0, 0}, {0, 0}, {0, 0}},
+        {{0, 0}, {0, 0}, {0, 0}, {0, 0}},
+        {{0, 0}, {0, 0}, {0, 0}, {0, 0}}
+    };
 }
 
 static void init(GLFWwindow* window)
