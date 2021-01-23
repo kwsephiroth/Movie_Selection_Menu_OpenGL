@@ -23,7 +23,7 @@ namespace DSS
 		int master_width;
 		int master_height;		
 		std::unique_ptr<Texture> texture = nullptr;
-		bool selected = false;
+		bool is_focused = false;
 		glm::vec2 position;
 	};
 	
@@ -70,14 +70,14 @@ namespace DSS
 		unsigned int _position_attrib_location;
 		unsigned int _texture_coord_attrib_location;
 		glm::mat4 _transform;
-		glm::vec2 _selected_position;
+		glm::vec2 _focused_tile_position = INIT_FOCUSED_TILE_POSITION;
 
 		void init();
 		void load_textures();
 		void load_homepage_api_json();
 		void init_meshes();
 		void init_menu_grid();
-		std::unique_ptr<Texture> download_texture(const char* img_url);
+		std::unique_ptr<Texture> download_texture(const char*);
 
 	public:
 		Renderer(unsigned int shader_program_id,
@@ -87,7 +87,7 @@ namespace DSS
 		~Renderer();
 		bool get_is_initialized() const { return _initialized; }
 		void draw_home_page();
-		void process_controller_input(const ControllerInput);
+		void process_controller_input(const ControllerInput, const glm::vec2&);
 		GLuint get_vao() const { return _vao; }
 	};
 }

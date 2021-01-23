@@ -25,7 +25,6 @@ namespace
         {{0, 0}, {0, 0}, {0, 0}, {0, 0}},
         {{0, 0}, {0, 0}, {0, 0}, {0, 0}}
     };
-    static const glm::vec2 INIT_TILE_POSITION = glm::vec2(1, 1);
     static std::atomic<bool> new_key_pressed = false;
 }
 
@@ -75,60 +74,60 @@ static void resize_callback(GLFWwindow* window, int width, int height)
 static void process_controller_input(DSS::Renderer& renderer)
 {
     using namespace DSS;
-    static glm::vec2 selected_tile_position = INIT_TILE_POSITION;
+    static glm::vec2 focused_tile_position = INIT_FOCUSED_TILE_POSITION;
 
     if (keys[GLFW_KEY_W])
     {
-        if (selected_tile_position.x == 1)//On row 1
+        if (focused_tile_position.x == 0)//On row 1
         {
             std::cout << "Can't move UP any further." << std::endl;
         }
         else
         {
-            --selected_tile_position.x;
-            renderer.process_controller_input(ControllerInput::UP);
-            std::cout << "selected_tile_position (" << selected_tile_position.x << " , " << selected_tile_position.y << " ) " << std::endl;
+            --focused_tile_position.x;
+            renderer.process_controller_input(ControllerInput::UP, focused_tile_position);
+            std::cout << "focused_tile_position (" << focused_tile_position.x << " , " << focused_tile_position.y << " ) " << std::endl;
         }
         
     }
     if (keys[GLFW_KEY_S])
     {
-        if (selected_tile_position.x == 4)//On row 4
+        if (focused_tile_position.x == 3)//On row 4
         {
             std::cout << "Can't move DOWN any further." << std::endl;
         }
         else
         {
-            ++selected_tile_position.x;
-            renderer.process_controller_input(ControllerInput::DOWN);
-            std::cout << "selected_tile_position (" << selected_tile_position.x << " , " << selected_tile_position.y << " ) " << std::endl;
+            ++focused_tile_position.x;
+            renderer.process_controller_input(ControllerInput::DOWN, focused_tile_position);
+            std::cout << "focused_tile_position (" << focused_tile_position.x << " , " << focused_tile_position.y << " ) " << std::endl;
         }
         
     }
     if (keys[GLFW_KEY_A])
     {
-        if (selected_tile_position.y == 1)//On column 1
+        if (focused_tile_position.y == 0)//On column 1
         {
             std::cout << "Can't move LEFT any further." << std::endl;
         }
         else
         {
-            --selected_tile_position.y;
-            renderer.process_controller_input(ControllerInput::LEFT);
-            std::cout << "selected_tile_position (" << selected_tile_position.x << " , " << selected_tile_position.y << " ) " << std::endl;
+            --focused_tile_position.y;
+            renderer.process_controller_input(ControllerInput::LEFT, focused_tile_position);
+            std::cout << "focused_tile_position (" << focused_tile_position.x << " , " << focused_tile_position.y << " ) " << std::endl;
         }
     }
     if (keys[GLFW_KEY_D])
     {
-        if (selected_tile_position.y == 5)//On column 5
+        if (focused_tile_position.y == 4)//On column 5
         {
             std::cout << "Can't move RIGHT any further." << std::endl;
         }
         else
         {
-            ++selected_tile_position.y;
-            renderer.process_controller_input(ControllerInput::RIGHT);
-            std::cout << "selected_tile_position (" << selected_tile_position.x << " , " << selected_tile_position.y << " ) " << std::endl;
+            ++focused_tile_position.y;
+            renderer.process_controller_input(ControllerInput::RIGHT, focused_tile_position);
+            std::cout << "focused_tile_position (" << focused_tile_position.x << " , " << focused_tile_position.y << " ) " << std::endl;
         }
     }
 }

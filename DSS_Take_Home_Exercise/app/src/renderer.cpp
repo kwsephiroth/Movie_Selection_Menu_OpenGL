@@ -213,23 +213,37 @@ namespace DSS
 		size_t rendered_row_count = 0;
 		size_t row_index = 0;
 		size_t column_index = 0;
+		size_t column_pos = 0;
+		size_t row_pos = 0;
 
 		while (rendered_row_count < 4 && row_index < _sets.size())//create 4 rows of tiles
 		{
+			row_pos = row_index;
 			while (rendered_tile_count < 5 && column_index < _sets[row_index].tiles.size())//create 5 columns of tiles
 			{
 				auto& current_tile = _sets[row_index].tiles[column_index];
-				current_tile.position = { pos_update_x, pos_update_y };
-				++column_index;
-				
+				//current_tile.position = { pos_update_x, pos_update_y };
+
 				if (!current_tile.texture)//Ignore any tiles that weren't properly initialized
 				{
+					column_pos = column_index;
+					++column_index;
 					continue;
 				}
 
+				current_tile.position = { row_pos, column_pos };
+				++column_pos;
+
+				//std::cout << "current_tile grid position ( " << current_tile.position.x << " , " << current_tile.position.y << " )" << std::endl;
 				//TODO: Apply any transformations to tiles
 				glm::mat4 transform(1);//Initialize to identity matrix
 				transform = glm::scale(transform, glm::vec3(SIZE_OFFSET, SIZE_OFFSET, 0.0f));
+				if (current_tile.position == _focused_tile_position)//Apply additional scaling to focused tile
+				{
+					current_tile.is_focused = true;
+					transform = glm::scale(transform, glm::vec3(SIZE_OFFSET + 0.5, SIZE_OFFSET + 1.0, 0.0f));
+					std::cout << "current_tile grid position ( " << current_tile.position.x << " , " << current_tile.position.y << " )" << std::endl;
+				}
 				transform = glm::translate(transform, glm::vec3(POS_OFFSET_X + pos_update_x, POS_OFFSET_Y + pos_update_y, 0.0f));
 				GLuint transLoc = glGetUniformLocation(_shader_program_id, "transform");
 				glUniformMatrix4fv(transLoc, 1, GL_FALSE, glm::value_ptr(transform));
@@ -243,19 +257,20 @@ namespace DSS
 				glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
 				glEnableVertexAttribArray(1);
 
-				//glEnable(GL_TEXTURE_2D);
 				current_tile.texture->bind(0);
 				glDrawArrays(GL_QUADS, 0, 4);
 				current_tile.texture->unbind();
 
 				pos_update_x += 1.4;
 				++rendered_tile_count;
+				++column_index;
 			}
 
 			//reset column counts
 			pos_update_x = 0;
 			rendered_tile_count = 0;
 			column_index = 0;
+			column_pos = 0;
 
 			pos_update_y -= 1.4;
 			++rendered_row_count;
@@ -264,31 +279,16 @@ namespace DSS
 		glBindVertexArray(0);
 	}
 
-	void Renderer::process_controller_input(const ControllerInput input)//TODO: Determine if this callback is thread-safe. this will update a current position member.
+	void Renderer::process_controller_input(const ControllerInput input, const glm::vec2& focused_tile_position)//TODO: Determine if this callback is thread-safe. this will update a current position member.
 	{
 		switch (input)
 		{
 			case ControllerInput::UP:
-			{
-
-			}
-			break;
-
 			case ControllerInput::DOWN:
-			{
-
-			}
-			break;
-
 			case ControllerInput::LEFT:
-			{
-
-			}
-			break;
-
 			case ControllerInput::RIGHT:
 			{
-
+				_focused_tile_position = focused_tile_position;
 			}
 			break;
 
