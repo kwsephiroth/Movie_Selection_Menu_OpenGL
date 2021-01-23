@@ -207,8 +207,8 @@ namespace DSS
 
 		glBindVertexArray(_vao);
 		
-		float pos_update_x = 0;
-		float pos_update_y = 0;
+		float spacing_update_x = 0;
+		float spacing_update_y = 0;
 		size_t rendered_tile_count = 0;
 		size_t rendered_row_count = 0;
 		size_t row_index = 0;
@@ -232,19 +232,25 @@ namespace DSS
 				}
 
 				current_tile.position = { row_pos, column_pos };
-				++column_pos;
+				
 
-				//std::cout << "current_tile grid position ( " << current_tile.position.x << " , " << current_tile.position.y << " )" << std::endl;
-				//TODO: Apply any transformations to tiles
+				//Apply any transformations to tiles
 				glm::mat4 transform(1);//Initialize to identity matrix
-				transform = glm::scale(transform, glm::vec3(SIZE_OFFSET, SIZE_OFFSET, 0.0f));
+				//transform = glm::translate(transform, glm::vec3(POS_OFFSET_X + spacing_update_x, POS_OFFSET_Y + spacing_update_y, 0.0f));
+				transform = glm::translate(transform, glm::vec3(-.8 + spacing_update_x, .7 + spacing_update_y, 0.0f));
+				
+
 				if (current_tile.position == _focused_tile_position)//Apply additional scaling to focused tile
 				{
 					current_tile.is_focused = true;
-					transform = glm::scale(transform, glm::vec3(SIZE_OFFSET + 0.5, SIZE_OFFSET + 1.0, 0.0f));
-					std::cout << "current_tile grid position ( " << current_tile.position.x << " , " << current_tile.position.y << " )" << std::endl;
+					transform = glm::scale(transform, glm::vec3(0.38f, 0.38f, 0.0f));
 				}
-				transform = glm::translate(transform, glm::vec3(POS_OFFSET_X + pos_update_x, POS_OFFSET_Y + pos_update_y, 0.0f));
+				else
+				{
+					transform = glm::scale(transform, glm::vec3(SIZE_OFFSET, SIZE_OFFSET, 0.0f));
+				}
+
+				//transform = glm::translate(transform, glm::vec3(POS_OFFSET_X + spacing_update_x, POS_OFFSET_Y + spacing_update_y, 0.0f));
 				GLuint transLoc = glGetUniformLocation(_shader_program_id, "transform");
 				glUniformMatrix4fv(transLoc, 1, GL_FALSE, glm::value_ptr(transform));
 				//
@@ -261,18 +267,22 @@ namespace DSS
 				glDrawArrays(GL_QUADS, 0, 4);
 				current_tile.texture->unbind();
 
-				pos_update_x += 1.4;
+				//update counters
+				//spacing_update_x += 1.4;
+				spacing_update_x += 0.4;
 				++rendered_tile_count;
 				++column_index;
+				++column_pos;
 			}
 
 			//reset column counts
-			pos_update_x = 0;
+			spacing_update_x = 0;
 			rendered_tile_count = 0;
 			column_index = 0;
 			column_pos = 0;
 
-			pos_update_y -= 1.4;
+			//spacing_update_y -= 1.4;
+			spacing_update_y -= 0.5;
 			++rendered_row_count;
 			++row_index;
 		}
