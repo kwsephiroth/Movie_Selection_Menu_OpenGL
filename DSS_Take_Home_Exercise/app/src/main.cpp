@@ -7,6 +7,7 @@
 #include <glm\gtc\matrix_transform.hpp> // glm::translate, glm::rotate, glm::scale, glm::perspective
 #include "renderer.h"
 #include "shader.h"
+#include <atomic>
 
 namespace
 {
@@ -24,6 +25,8 @@ namespace
         {{0, 0}, {0, 0}, {0, 0}, {0, 0}},
         {{0, 0}, {0, 0}, {0, 0}, {0, 0}}
     };
+    static const glm::vec2 INIT_TILE_POSITION = glm::vec2(1, 1);
+    static std::atomic<bool> new_key_pressed = false;
 }
 
 static void init(GLFWwindow* window)
@@ -47,9 +50,14 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     if (key >= 0 && key < 1024)
     {
         if (action == GLFW_PRESS)
+        {
             keys[key] = true;
+            new_key_pressed.store(true);
+        }
         else if (action == GLFW_RELEASE)
+        {
             keys[key] = false;
+        }
     }
 }
 
@@ -67,23 +75,62 @@ static void resize_callback(GLFWwindow* window, int width, int height)
 static void process_controller_input(DSS::Renderer& renderer)
 {
     using namespace DSS;
+    static glm::vec2 selected_tile_position = INIT_TILE_POSITION;
+
     if (keys[GLFW_KEY_W])
     {
-        renderer.process_controller_input(ControllerInput::UP);
+        if (selected_tile_position.x == 1)//On row 1
+        {
+            std::cout << "Can't move UP any further." << std::endl;
+        }
+        else
+        {
+            --selected_tile_position.x;
+            renderer.process_controller_input(ControllerInput::UP);
+            std::cout << "selected_tile_position (" << selected_tile_position.x << " , " << selected_tile_position.y << " ) " << std::endl;
+        }
+        
     }
     if (keys[GLFW_KEY_S])
     {
-        renderer.process_controller_input(ControllerInput::DOWN);
+        if (selected_tile_position.x == 4)//On row 4
+        {
+            std::cout << "Can't move DOWN any further." << std::endl;
+        }
+        else
+        {
+            ++selected_tile_position.x;
+            renderer.process_controller_input(ControllerInput::DOWN);
+            std::cout << "selected_tile_position (" << selected_tile_position.x << " , " << selected_tile_position.y << " ) " << std::endl;
+        }
+        
     }
     if (keys[GLFW_KEY_A])
     {
-        renderer.process_controller_input(ControllerInput::LEFT);
+        if (selected_tile_position.y == 1)//On column 1
+        {
+            std::cout << "Can't move LEFT any further." << std::endl;
+        }
+        else
+        {
+            --selected_tile_position.y;
+            renderer.process_controller_input(ControllerInput::LEFT);
+            std::cout << "selected_tile_position (" << selected_tile_position.x << " , " << selected_tile_position.y << " ) " << std::endl;
+        }
     }
     if (keys[GLFW_KEY_D])
     {
-        renderer.process_controller_input(ControllerInput::RIGHT);
+        if (selected_tile_position.y == 5)//On column 5
+        {
+            std::cout << "Can't move RIGHT any further." << std::endl;
+        }
+        else
+        {
+            ++selected_tile_position.y;
+            renderer.process_controller_input(ControllerInput::RIGHT);
+            std::cout << "selected_tile_position (" << selected_tile_position.x << " , " << selected_tile_position.y << " ) " << std::endl;
+        }
     }
-
 }
 
 
@@ -132,7 +179,12 @@ int main(void)
         glfwPollEvents(); //Any pressed keys will be recorded
 
         //Process any controller inputs
-        process_controller_input(renderer);
+        //TODO: Avoid doing this every frame somehow;
+        if (new_key_pressed.load())
+        {
+            process_controller_input(renderer);
+            new_key_pressed.store(false);
+        }
 
         glClearColor(0, 0, 255, 1);
         glClear(GL_COLOR_BUFFER_BIT);

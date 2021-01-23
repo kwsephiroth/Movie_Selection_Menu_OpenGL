@@ -77,6 +77,7 @@ namespace DSS
 		void load_homepage_api_json();
 		void init_meshes();
 		void init_menu_grid();
+		std::unique_ptr<Texture> download_texture(const char* img_url);
 
 	public:
 		Renderer(unsigned int shader_program_id,

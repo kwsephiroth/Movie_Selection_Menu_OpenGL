@@ -156,52 +156,45 @@ namespace DSS
 
 	void Renderer::load_textures()
 	{
-		//int j = 1;
 		for (auto& set : _sets)
 		{	
 			for (auto& tile : set.tiles)
 			{
-				//TODO: Use image url and curl to load tile images into memory.
-				//std::string out_file_name = "image" + std::to_string(j) + ".jpeg";
-				//std::ofstream out_image(out_file_name, std::ios::binary);
-				/*if (!out_image.good())
+				auto texture_ptr = download_texture(tile.image_url.c_str());
+				if (!texture_ptr)//Skip any textures that couldn't be successfully downloaded.
 				{
-					std::cout << "Failed to open image output file." << std::endl;
-					return;
-				}*/
-				//std::cout << "downloading image from " << tile.image_url << std::endl;
-				//std::cout << "Loading texture for file @ " << tile.image_url << std::endl;
-				auto file_memory_ptr = curl_utils::download_file_to_memory(tile.image_url.c_str());
-				if (file_memory_ptr)
-				{
-					int width = 0;
-					int height = 0;
-					int channels = 0;
-					std::unique_ptr<unsigned char> image_buffer_ptr(SOIL_load_image_from_memory((const unsigned char*)file_memory_ptr->memory,
-						file_memory_ptr->size,
-						&width,
-						&height,
-						&channels,
-						SOIL_LOAD_AUTO));
-					
-					if (!image_buffer_ptr)
-					{
-						//std::cout << "image was null for url " << tile.image_url << " and size = " << file_memory_ptr->size << std::endl;
-						continue;
-					}
-
-					//SOIL_save_image(out_file_name.c_str(), SOIL_SAVE_TYPE_JPG, width, height, channels, image_buffer_ptr.get());
-					tile.texture.reset( new Texture(std::move(image_buffer_ptr), width, height ));
-					//std::cout << "width = " << width << " , height = " << height << " , tile.master_width = " << tile.master_width << " , tile.master_height = " << tile.master_height
-						//<< " , channels = " << channels << std::endl;
+					continue;
 				}
-				//out_image.close();
-				//if (j == 10) return;
-				//++j;
-				//return;//temp - just download one file
-				
+				tile.texture = std::move(texture_ptr);
 			}
 		}
+	}
+
+	std::unique_ptr<Texture> Renderer::download_texture(const char * img_url)
+	{
+
+		//std::string out_file_name = "image" + std::to_string(j) + ".jpeg";
+		auto file_memory_ptr = curl_utils::download_file_to_memory(img_url);
+		if (file_memory_ptr)
+		{
+			int width = 0;
+			int height = 0;
+			int channels = 0;
+			std::unique_ptr<unsigned char> image_buffer_ptr(SOIL_load_image_from_memory((const unsigned char*)file_memory_ptr->memory,
+				file_memory_ptr->size,
+				&width,
+				&height,
+				&channels,
+				SOIL_LOAD_AUTO));
+
+			if (!image_buffer_ptr)
+			{
+				return nullptr;
+			}
+			//SOIL_save_image(out_file_name.c_str(), SOIL_SAVE_TYPE_JPG, width, height, channels, image_buffer_ptr.get());
+			return std::unique_ptr<Texture>(new Texture(std::move(image_buffer_ptr), width, height));
+		}
+		return nullptr;
 	}
 
 	void Renderer::draw_home_page()
