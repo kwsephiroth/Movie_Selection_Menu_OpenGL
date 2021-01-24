@@ -74,7 +74,7 @@ namespace DSS
 		FT_Face _face;
 		FT_GlyphSlot _glyph_slot;
 		glm::vec2 _boundary_pos = { 0, 0 };
-		unsigned int _row_to_tiles_frame[MAX_SETS_RENDERED][MAX_TILES_RENDERED];
+		int _row_to_tiles_frame[MAX_SETS_RENDERED][MAX_TILES_RENDERED];
 		bool _shift_tiles_horizontal = false;
 		bool _shift_tiles_vertical = false;
 		int _shift_y_offset = 0;

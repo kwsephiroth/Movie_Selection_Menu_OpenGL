@@ -20,7 +20,7 @@ namespace
     static std::atomic<bool> new_key_pressed = false;
 }
 
-static void init(GLFWwindow* window)
+static void init_shader_program(GLFWwindow* window)
 {
     const std::string vShaderSource =
         #include "../res/shaders/vertex_shader.glsl"
@@ -131,7 +131,7 @@ int main(void)
     glfwSetKeyCallback(window, key_callback);
     glfwSetWindowSizeCallback(window, window_size_callback);
 
-    init(window);
+    init_shader_program(window);
 
     DSS::Renderer renderer(rendering_program, position_attrib_location, texture_attrib_location);
 

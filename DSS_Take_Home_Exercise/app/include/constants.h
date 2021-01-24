@@ -9,6 +9,7 @@ namespace DSS
 	static const glm::vec2 INIT_FOCUSED_TILE_POSITION = glm::vec2(0, 0);
 	static const unsigned int MAX_TILES_RENDERED = 6;
 	static const unsigned int MAX_SETS_RENDERED = 4;
+	static const unsigned int MAX_TILE_FRAME_SIZE = MAX_TILES_RENDERED + 1;
 	static const unsigned int TILES_LEFT_BOUNDARY_Y = 0;
 	static const unsigned int TILES_RIGHT_BOUNDARY_Y = (MAX_TILES_RENDERED - 2);
 	static const unsigned int SETS_UPPER_BOUNDARY_X = 0;

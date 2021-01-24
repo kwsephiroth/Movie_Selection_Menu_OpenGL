@@ -193,7 +193,7 @@ namespace DSS
 		for (auto& set : _sets)
 		{	
 			//for (auto& tile : set.tiles)
-			for (auto itr = set.tiles.begin(); itr != (set.tiles.begin() + MAX_TILES_RENDERED);)//!= set.tiles.end();)
+			for (auto itr = set.tiles.begin(); itr != (set.tiles.begin() + MAX_TILES_RENDERED);)
 			{
 				auto texture_ptr = download_texture(itr->image_url.c_str());
 				if (!texture_ptr)//Skip any textures that couldn't be successfully downloaded.
@@ -331,7 +331,7 @@ namespace DSS
 			for (int tile_index = 0; tile_index < MAX_TILES_RENDERED; ++tile_index)
 			{
 				int current_index = _row_to_tiles_frame[row_index][tile_index];
-				if (current_index < 0 || current_index >= _sets[row_index].tiles.size())//INVALID FRAME DETECTED
+				if (current_index < 0 || current_index > _sets[row_index].tiles.size())//INVALID FRAME DETECTED
 				{
 					invalid_tiles_frame = true;
 					break;
@@ -348,6 +348,10 @@ namespace DSS
 					break;
 
 				int frame_index = _row_to_tiles_frame[row_index][tile_index];
+
+				if (frame_index == _sets[row_index].tiles.size())//Don't try to render past max tile count
+					continue;
+
 				auto& current_tile = _sets[row_index].tiles[frame_index];
 				current_tile.position = { row_pos, tile_index };
 				//std::cout << "current_tile.position = (" << current_tile.position.x << " , " << current_tile.position.y << " )" << std::endl;
@@ -520,13 +524,13 @@ namespace DSS
 			auto current_row_tile_count = _sets[(int)pos.x].tiles.size();
 
 			//shift tiles left
-			if (_row_to_tiles_frame[(int)pos.x][MAX_TILES_RENDERED - 1] == (current_row_tile_count - 1))//DON'T UPDATE FRAME!!!
+			if (_row_to_tiles_frame[(int)pos.x][MAX_TILES_RENDERED - 1] == (current_row_tile_count))// - 1))//DON'T UPDATE FRAME!!!
 				return;
 
 			for (int tile_index = 0; tile_index < MAX_TILES_RENDERED; ++tile_index)
 			{
 				int new_index = _row_to_tiles_frame[(int)pos.x][tile_index] + 1;
-				if (new_index >= current_row_tile_count)//new index out of range of current row //DON'T ADD INVALID INDEX
+				if (new_index > current_row_tile_count)//new index out of range of current row //DON'T ADD INVALID INDEX
 				{
 					return;
 				}
