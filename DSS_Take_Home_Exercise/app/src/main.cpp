@@ -17,13 +17,6 @@ namespace
     static bool keys[1024];
     static unsigned int position_attrib_location;
     static unsigned int texture_attrib_location;
-    static glm::vec2 grid_offsets[4][5] =
-    {
-        {{0, 0}, {0, 0}, {0, 0}, {0, 0}},
-        {{0, 0}, {0, 0}, {0, 0}, {0, 0}},
-        {{0, 0}, {0, 0}, {0, 0}, {0, 0}},
-        {{0, 0}, {0, 0}, {0, 0}, {0, 0}}
-    };
     static std::atomic<bool> new_key_pressed = false;
 }
 
@@ -79,23 +72,22 @@ static void resize_callback(GLFWwindow* window, int width, int height)
 static void process_controller_input(DSS::Renderer& renderer)
 {
     using namespace DSS;
-    static glm::vec2 focused_tile_position = INIT_FOCUSED_TILE_POSITION;
 
     if (keys[GLFW_KEY_W])
     {
-        renderer.process_controller_input(ControllerInput::UP);// , focused_tile_position);
+        renderer.process_controller_input(ControllerInput::UP);
     }
     if (keys[GLFW_KEY_S])
     {
-        renderer.process_controller_input(ControllerInput::DOWN);// , focused_tile_position);
+        renderer.process_controller_input(ControllerInput::DOWN);
     }
     if (keys[GLFW_KEY_A])
     {
-        renderer.process_controller_input(ControllerInput::LEFT);// , focused_tile_position);
+        renderer.process_controller_input(ControllerInput::LEFT);
     }
     if (keys[GLFW_KEY_D])
     {
-        renderer.process_controller_input(ControllerInput::RIGHT);// , focused_tile_position);
+        renderer.process_controller_input(ControllerInput::RIGHT);
     }
 }
 

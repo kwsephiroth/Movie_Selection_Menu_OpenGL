@@ -252,8 +252,6 @@ namespace DSS
 		size_t rendered_tile_count = 0;
 		size_t rendered_row_count = 0;
 		size_t row_index = 0;
-		int column_index = 0;
-		size_t column_pos = 0;
 		size_t row_pos = 0;
 
 		while (rendered_row_count < 4 && row_index < _sets.size())//create 4 rows of tiles
@@ -277,7 +275,7 @@ namespace DSS
 				continue;//Skip rendering for this row
 
 
-			for(int tile_index = 0; tile_index < 5; ++tile_index)
+			for(int tile_index = 0; tile_index < 5; ++tile_index)//TODO: Make tile count a constant
 			{
 				if (tile_index >= _sets[row_index].tiles.size())
 					break;
@@ -346,10 +344,7 @@ namespace DSS
 				else
 				{
 					--_focused_tile_position.x;
-					_shift_tiles_vertical = false;
-					_shift_y_offset = 0;
 				}
-				std::cout << "focused_tile_position (" << _focused_tile_position.x << " , " << _focused_tile_position.y << " ) " << std::endl;
 			}
 			break;
 
@@ -363,10 +358,7 @@ namespace DSS
 				else
 				{
 					++_focused_tile_position.x;
-					_shift_tiles_vertical = false;
-					_shift_y_offset = 0;
 				}
-				std::cout << "focused_tile_position (" << _focused_tile_position.x << " , " << _focused_tile_position.y << " ) " << std::endl;
 			}
 			break;
 
@@ -380,10 +372,7 @@ namespace DSS
 				else
 				{
 					--_focused_tile_position.y;
-					_shift_tiles_horizontal = false;
-					_shift_x_offset = 0;
 				}
-				std::cout << "focused_tile_position (" << _focused_tile_position.x << " , " << _focused_tile_position.y << " ) " << std::endl;
 			}
 			break;
 
@@ -397,10 +386,7 @@ namespace DSS
 				else
 				{
 					++_focused_tile_position.y;
-					_shift_tiles_horizontal = false;
-					_shift_x_offset = 0;
 				}
-				std::cout << "focused_tile_position (" << _focused_tile_position.x << " , " << _focused_tile_position.y << " ) " << std::endl;
 			}
 			break;
 
@@ -419,74 +405,69 @@ namespace DSS
 			default:
 			{
 				std::cerr << "ERROR: Invalid controller input detected." << std::endl;
+				return;
 			}
 		}
+
+		std::cout << "focused_tile_position (" << _focused_tile_position.x << " , " << _focused_tile_position.y << " ) " << std::endl;
 	}
 
-	bool Renderer::check_for_horizontal_boundary_hit(const glm::vec2& pos)
+	void Renderer::check_for_horizontal_boundary_hit(const glm::vec2& pos)
 	{
 		if (pos.y == 0)
 		{
-			std::cout << "Boundary Hit Detected!" << std::endl;
+			std::cout << "Horizontal Boundary Hit Detected!" << std::endl;
+			//shift tiles right
 			if (_row_to_tiles_frame[(int)pos.x][0] == 0)//DON'T UPDATE FRAME!!!
-				return true;
+				return;
 
 			for (int tile_index = 0; tile_index < 5; ++tile_index)
 			{
 				int new_index = _row_to_tiles_frame[(int)pos.x][tile_index] - 1;
-				if (new_index < 0)//new index out of range of current row
+				if (new_index < 0)//new index out of range of current row//DON'T ADD INVALID INDEX
 				{
-					_row_to_tiles_frame[(int)pos.x][tile_index] = _sets[(int)pos.x].tiles.size() - 1;
-					return true;
+					return;
 				}
 				else
 				{
 					_row_to_tiles_frame[(int)pos.x][tile_index] = new_index;
 				}
 			}
-			return true;
 		}
 		else if (pos.y == 4)
 		{
-			std::cout << "Boundary Hit Detected!" << std::endl;
+			std::cout << "Horizontal Boundary Hit Detected!" << std::endl;
+
 			//shift tiles left
 			if (_row_to_tiles_frame[(int)pos.x][4] == (_sets[(int)pos.x].tiles.size() - 1))//DON'T UPDATE FRAME!!!
-				return true;
+				return;
 
 			for (int tile_index = 0; tile_index < 5; ++tile_index)
 			{
 				int new_index = _row_to_tiles_frame[(int)pos.x][tile_index] + 1;
 				if (new_index >= _sets[(int)pos.x].tiles.size())//new index out of range of current row //DON'T ADD INVALID INDEX
 				{
-					return true;
-					//_row_to_tiles_frame[(int)pos.x][tile_index] = _sets[(int)pos.x].tiles.size() - 1;
+					return;
 				}
 				else
 				{
 				  _row_to_tiles_frame[(int)pos.x][tile_index] = new_index;
 				}
 			}
-			return true;
 		}
-
-		return false;
 	}
 
-	bool Renderer::check_for_vertical_boundary_hit(const glm::vec2& pos)
+	void Renderer::check_for_vertical_boundary_hit(const glm::vec2& pos)
 	{
 		if (pos.x == 0)
 		{
-			std::cout << "Boundary Hit Detected!" << std::endl;
+			std::cout << "Vertical Boundary Hit Detected!" << std::endl;
 			//shift tiles down
-			return true;
 		}
 		else if (pos.x == 3)
 		{
-			std::cout << "Boundary Hit Detected!" << std::endl;
+			std::cout << "Vertical Boundary Hit Detected!" << std::endl;
 			//shift tiles up
-			return true;
 		}
-
-		return false;
 	}
 }

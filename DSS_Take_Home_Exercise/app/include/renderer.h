@@ -108,8 +108,8 @@ namespace DSS
 		void init_menu_grid();
 		bool init_text_dependencies();
 		std::unique_ptr<Texture> download_texture(const char*);
-		bool check_for_horizontal_boundary_hit(const glm::vec2& pos);
-		bool check_for_vertical_boundary_hit(const glm::vec2& pos);
+		void check_for_horizontal_boundary_hit(const glm::vec2& pos);
+		void check_for_vertical_boundary_hit(const glm::vec2& pos);
 
 	public:
 		Renderer(unsigned int shader_program_id,
