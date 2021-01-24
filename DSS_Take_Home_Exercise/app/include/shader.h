@@ -36,7 +36,7 @@ namespace DSS
 			{
 				glGetShaderInfoLog(vertex, 512, NULL, infoLog);
 				std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-				assert(success);
+				//assert(success);
 			}
 			// Fragment Shader
 			fragment = glCreateShader(GL_FRAGMENT_SHADER);
@@ -48,7 +48,7 @@ namespace DSS
 			{
 				glGetShaderInfoLog(fragment, 512, NULL, infoLog);
 				std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-				assert(success);
+				//assert(success);
 			}
 			// Shader Program
 			this->Program = glCreateProgram();
@@ -61,7 +61,7 @@ namespace DSS
 			{
 				glGetProgramInfoLog(this->Program, 512, NULL, infoLog);
 				std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-				assert(success);
+				//assert(success);
 			}
 			// Delete the shaders as they're linked into our program now and no longer necessery
 			glDeleteShader(vertex);

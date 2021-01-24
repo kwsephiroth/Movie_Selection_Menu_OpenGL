@@ -30,11 +30,15 @@ static void init_shader_program(GLFWwindow* window)
         ;
     DSS::Shader shader(vShaderSource.c_str(), fShaderSource.c_str());
     rendering_program = shader.Program;
-    position_attrib_location = glGetAttribLocation(rendering_program, "pos");
+    position_attrib_location = glGetAttribLocation(rendering_program, "tilePos");
     texture_attrib_location = glGetAttribLocation(rendering_program, "texCoord");
     glfwGetFramebufferSize(window, &width, &height);
     aspect = (float)width / (float)height;
     pMat = glm::perspective(1.0472f, aspect, 0.1f, 1000.0f);
+    glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(1920), 0.0f, static_cast<float>(1080));
+    shader.Use();
+    glUniformMatrix4fv(glGetUniformLocation(shader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+    glUseProgram(0);
 }
 
 // Is called whenever a key is pressed/released via GLFW
@@ -149,15 +153,19 @@ int main(void)
             new_key_pressed.store(false);
         }
 
-        glClearColor(0, 0, 255, 1);
+        glClearColor(0, 0, 255, 1);//Background color
         glClear(GL_COLOR_BUFFER_BIT);
+        glEnable(GL_CULL_FACE);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         renderer.draw_home_page();
 
-        //while (GLenum error = glGetError())
-        //{
-        //    std::cout << "[OpenGL Error] (" << error << ") " << std::endl;
-        //}
+        while (GLenum error = glGetError())
+        {
+            std::cout << "[OpenGL Error] (" << error << ") " << std::endl;
+        }
+
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);

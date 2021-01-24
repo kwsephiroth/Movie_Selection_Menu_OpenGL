@@ -32,15 +32,15 @@ namespace DSS
 		//TODO: Determine if this function should throw an exception if it fails to initialize the object state.
 		load_homepage_api_json();
 		if (_home_json_ptr)
-		{
-			//Load objects needed for rendering text.
-			//TODO: Implement text rendering.
-			//assert(init_text_dependencies());
-
+		{			
 			//Generate Vertex Array Object
 			glGenVertexArrays(1, &_vao);
+
+			//Load objects needed for rendering text.
+			//TODO: Implement text rendering.
+			assert(init_text_dependencies());
+
 			glBindVertexArray(_vao);
-			
 			load_textures();
 			//init_meshes();
 			
@@ -75,27 +75,135 @@ namespace DSS
 
 	bool Renderer::init_text_dependencies()
 	{
-		if (FT_Init_FreeType(&_ft)) {
+		FT_Library ft;
+
+		if (FT_Init_FreeType(&ft)) {
 			fprintf(stderr, "Could not init freetype library\n");
 			return false;
 		}
 
-		if (FT_New_Face(_ft, "./app/res/fonts/FreeSans.ttf", 0, &_face)) //TODO: copy the file to executable directory
+		FT_Face face;
+		if (FT_New_Face(ft, "./app/res/fonts/FreeSans.ttf", 0, &face)) //TODO: copy the file to executable directory
 		{
 			fprintf(stderr, "Could not open font\n");
 			return false;
 		}
 
-		FT_Set_Pixel_Sizes(_face, 0, 48);
+		FT_Set_Pixel_Sizes(face, 0, 48);
 
-		if (FT_Load_Char(_face, 'X', FT_LOAD_RENDER)) {
-			fprintf(stderr, "Could not load character 'X'\n");
-			return false;
+		// disable byte-alignment restriction
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+		// load first 128 characters of ASCII set
+		for (unsigned char c = 0; c < 128; c++)
+		{
+			if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
+				fprintf(stderr, "Could not load character %c\n", c);
+				continue;
+			}
+
+			// generate texture for character
+			unsigned int texture;
+			glGenTextures(1, &texture);
+			glBindTexture(GL_TEXTURE_2D, texture);
+			glTexImage2D(
+				GL_TEXTURE_2D,
+				0,
+				GL_RED,
+				face->glyph->bitmap.width,
+				face->glyph->bitmap.rows,
+				0,
+				GL_RED,
+				GL_UNSIGNED_BYTE,
+				face->glyph->bitmap.buffer
+			);
+
+			// set texture options
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+			// now store character for later use
+			Character character = {
+				texture,
+				glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
+				glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
+				static_cast<unsigned int>(face->glyph->advance.x)
+			};
+			_characters.insert(std::pair<char, Character>(c, character));
 		}
+		glBindTexture(GL_TEXTURE_2D, 0);
 
-		_glyph_slot = _face->glyph;
+		// destroy FreeType once we're finished
+		FT_Done_Face(face);
+		FT_Done_FreeType(ft);
+
+
+		// configure VAO/VBO for texture quads
+		// -----------------------------------
+		//glGenVertexArrays(1, &VAO);
+		glGenBuffers(1, &_text_vbo);
+		glBindVertexArray(_vao);
+		glBindBuffer(GL_ARRAY_BUFFER, _text_vbo);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
+		GLuint char_attrib_location = glGetAttribLocation(_shader_program_id, "charPos");
+		glEnableVertexAttribArray(char_attrib_location);
+		//std::cout << "char_attrib_location = " << char_attrib_location << std::endl;
+		glVertexAttribPointer(char_attrib_location, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
 
 		return true;
+	}
+
+	void Renderer::render_text(std::string text, float x, float y, float scale, glm::vec3 color)
+	{
+		// activate corresponding render state	
+		glUseProgram(_shader_program_id);
+		glBindVertexArray(_vao);
+		glActiveTexture(GL_TEXTURE0);
+		glUniform3f(glGetUniformLocation(_shader_program_id, "textColor"), color.x, color.y, color.z);
+		glUniform1i(glGetUniformLocation(_shader_program_id, "textRender"), 1);
+
+		// iterate through all characters
+		std::string::const_iterator c;
+		for (c = text.begin(); c != text.end(); c++)
+		{
+			Character ch = _characters[*c];
+
+			float xpos = x + ch.Bearing.x * scale;
+			float ypos = y - (ch.Size.y - ch.Bearing.y) * scale;
+
+			float w = ch.Size.x * scale;
+			float h = ch.Size.y * scale;
+
+			// update VBO for each character
+			float vertices[6][4] = {
+				{ xpos,     ypos + h,   0.0f, 0.0f },
+				{ xpos,     ypos,       0.0f, 1.0f },
+				{ xpos + w, ypos,       1.0f, 1.0f },
+
+				{ xpos,     ypos + h,   0.0f, 0.0f },
+				{ xpos + w, ypos,       1.0f, 1.0f },
+				{ xpos + w, ypos + h,   1.0f, 0.0f }
+			};
+
+			// render glyph texture over quad
+			glBindTexture(GL_TEXTURE_2D, ch.TextureID);
+			// update content of VBO memory
+			glBindBuffer(GL_ARRAY_BUFFER, _text_vbo);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices); // be sure to use glBufferSubData and not glBufferData
+
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			// render quad
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+			// now advance cursors for next glyph (note that advance is number of 1/64 pixels)
+			x += (ch.Advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))
+		}
+		glBindVertexArray(0);
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glUniform1i(glGetUniformLocation(_shader_program_id, "textRender"), 0);
 	}
 
 	void Renderer::load_homepage_api_json()
@@ -304,6 +412,16 @@ namespace DSS
 
 	void Renderer::draw_home_page()
 	{
+
+		//RENDER TEXT FIRST
+		float title_y_shift = 0;
+		float init_y = 1045.0f;
+		for (const auto& set : _sets)
+		{
+			render_text(set.name, 45, init_y - title_y_shift, 0.4f, glm::vec3(1.0, 1.0f, 1.0f));
+			title_y_shift += 270;
+		}
+
 		glUseProgram(_shader_program_id);
 
 		static const float SCALE_FACTOR = 0.3f;
@@ -312,7 +430,6 @@ namespace DSS
 		static const float FOCUSED_SCALE_FACTOR = 0.39f;
 
 		glBindVertexArray(_vao);
-
 //DRAW TILE GRID
 		float spacing_update_x = 0;
 		float spacing_update_y = 0;
@@ -376,11 +493,11 @@ namespace DSS
 				//
 
 				glBindBuffer(GL_ARRAY_BUFFER, _tile_pos_vbo);
-				glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+				glVertexAttribPointer(_position_attrib_location, 3, GL_FLOAT, GL_FALSE, 0, 0);
 				glEnableVertexAttribArray(0);
 
 				glBindBuffer(GL_ARRAY_BUFFER, _tile_tex_vbo);
-				glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+				glVertexAttribPointer(_texture_coord_attrib_location, 2, GL_FLOAT, GL_FALSE, 0, 0);
 				glEnableVertexAttribArray(1);
 
 

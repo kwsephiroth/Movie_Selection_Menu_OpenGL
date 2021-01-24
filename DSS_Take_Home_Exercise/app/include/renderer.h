@@ -15,10 +15,10 @@
 #include "utils.h"
 #include "curl_utils.h"
 #include "text.h"
-#include <ft2build.h>
-#include FT_FREETYPE_H
 #include <iostream>
-#include <unordered_map>
+#include <map>
+#include <ft2build.h>
+#include FT_FREETYPE_H 
 
 namespace DSS
 {
@@ -65,20 +65,19 @@ namespace DSS
 		GLuint _vao;
 		GLuint _tile_pos_vbo;
 		GLuint _tile_tex_vbo;
+		GLuint _text_vbo;
 		unsigned int _shader_program_id;
 		unsigned int _position_attrib_location;
 		unsigned int _texture_coord_attrib_location;
 		glm::mat4 _transform;
 		glm::vec2 _focused_tile_position = INIT_FOCUSED_TILE_POSITION;
-		FT_Library _ft;
-		FT_Face _face;
-		FT_GlyphSlot _glyph_slot;
 		glm::vec2 _boundary_pos = { 0, 0 };
 		int _row_to_tiles_frame[MAX_SETS_RENDERED][MAX_TILES_RENDERED];
 		bool _shift_tiles_horizontal = false;
 		bool _shift_tiles_vertical = false;
 		int _shift_y_offset = 0;
 		int _shift_x_offset = 0;
+		std::map<GLchar, Character> _characters;
 
 		void init();
 		void load_textures();
@@ -89,6 +88,7 @@ namespace DSS
 		void check_for_vertical_boundary_hit(const glm::vec2& pos);
 		void load_all_reference_sets();
 		void load_reference_set(const Ref_Set_Info&);
+		void render_text(std::string text, float x, float y, float scale, glm::vec3 color);
 
 	public:
 		Renderer(unsigned int shader_program_id,
