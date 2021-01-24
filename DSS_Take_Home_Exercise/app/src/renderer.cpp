@@ -193,7 +193,7 @@ namespace DSS
 		for (auto& set : _sets)
 		{	
 			//for (auto& tile : set.tiles)
-			for(auto itr = set.tiles.begin(); itr != set.tiles.end();)
+			for (auto itr = set.tiles.begin(); itr != (set.tiles.begin() + MAX_TILES_RENDERED);)//!= set.tiles.end();)
 			{
 				auto texture_ptr = download_texture(itr->image_url.c_str());
 				if (!texture_ptr)//Skip any textures that couldn't be successfully downloaded.
@@ -379,6 +379,18 @@ namespace DSS
 				glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
 				glEnableVertexAttribArray(1);
 
+
+				//Download additional textures as needed.
+				if (!current_tile.texture)
+				{
+					current_tile.texture = download_texture(current_tile.image_url.c_str());
+					if (!current_tile.texture)
+					{
+						continue;
+					}
+					std::cout << "downloaded additional texture @ " << current_tile.image_url.c_str() << std::endl;
+				}
+
 				current_tile.texture->bind(0);
 				glDrawArrays(GL_QUADS, 0, 4);
 				current_tile.texture->unbind();
@@ -476,7 +488,7 @@ namespace DSS
 			}
 		}
 
-		std::cout << "focused_tile_position (" << _focused_tile_position.x << " , " << _focused_tile_position.y << " ) " << std::endl;
+		//std::cout << "focused_tile_position (" << _focused_tile_position.x << " , " << _focused_tile_position.y << " ) " << std::endl;
 	}
 
 	void Renderer::check_for_horizontal_boundary_hit(const glm::vec2& pos)
