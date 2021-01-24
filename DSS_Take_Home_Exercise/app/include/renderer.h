@@ -1,10 +1,8 @@
 #ifndef RENDERER_H_
 #define RENDERER_H_
-#include "utils.h"
 #include <rapidjson/document.h>
 #include <memory>
 #include <SOIL2/SOIL2.h>
-#include "curl_utils.h"
 #include "constants.h"
 #include "rapidjson/pointer.h"
 #include <string>
@@ -14,6 +12,12 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "texture.h"
+#include "utils.h"
+#include "curl_utils.h"
+#include "text.h"
+#include <ft2build.h>
+#include FT_FREETYPE_H
+#include <iostream>
 
 namespace DSS
 {
@@ -24,7 +28,22 @@ namespace DSS
 		int master_height;		
 		std::unique_ptr<Texture> texture = nullptr;
 		bool is_focused = false;
+		bool in_view = false;
 		glm::vec2 position;
+
+		void update_in_view()
+		{
+			//std::cout << " ( " << position.x << " , " << position.y << " )" << std::endl;
+			if (position.x >= 0 && position.x <= 3)
+			{
+				if (position.y >= 0 && position.y <= 4)
+				{
+					in_view = true;
+					return;
+				}
+			}
+			in_view = false;
+		}
 	};
 	
 	struct Set
@@ -71,12 +90,22 @@ namespace DSS
 		unsigned int _texture_coord_attrib_location;
 		glm::mat4 _transform;
 		glm::vec2 _focused_tile_position = INIT_FOCUSED_TILE_POSITION;
+		FT_Library _ft;
+		FT_Face _face;
+		FT_GlyphSlot _glyph_slot;
+		glm::vec2 _boundary_pos = { 0, 0 };
+
+		bool _shift_tiles_horizontal = false;
+		bool _shift_tiles_vertical = false;
+		int _shift_y_offset = 0;
+		int _shift_x_offset = 0;
 
 		void init();
 		void load_textures();
 		void load_homepage_api_json();
 		void init_meshes();
 		void init_menu_grid();
+		bool init_text_dependencies();
 		std::unique_ptr<Texture> download_texture(const char*);
 
 	public:
@@ -88,6 +117,51 @@ namespace DSS
 		bool get_is_initialized() const { return _initialized; }
 		void draw_home_page();
 		void process_controller_input(const ControllerInput, const glm::vec2&);
+
+		bool check_for_horizontal_boundary_hit(const glm::vec2& pos)
+		{
+			if (pos.y == 0)
+			{
+				std::cout << "Boundary Hit Detected!" << std::endl;
+				//shift tiles right
+				_shift_tiles_horizontal = true;
+				--_shift_x_offset;
+				return true;
+			}
+			else if (pos.y == 4)
+			{
+				std::cout << "Boundary Hit Detected!" << std::endl;
+				//shift tiles left
+				_shift_tiles_horizontal = true;
+				++_shift_x_offset;
+				return true;
+			}
+
+			return false;
+		}
+
+		bool check_for_vertical_boundary_hit(const glm::vec2& pos)
+		{
+			if (pos.x == 0)
+			{
+				std::cout << "Boundary Hit Detected!" << std::endl;
+				//shift tiles down
+				_shift_tiles_vertical = true;
+				--_shift_y_offset;
+				return true;
+			}
+			else if (pos.x == 3)
+			{
+				std::cout << "Boundary Hit Detected!" << std::endl;
+				//shift tiles up
+				_shift_tiles_vertical = true;
+				++_shift_y_offset;
+				return true;
+			}
+
+			return false;
+		}
+
 		GLuint get_vao() const { return _vao; }
 	};
 }

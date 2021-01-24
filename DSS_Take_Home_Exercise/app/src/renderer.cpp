@@ -19,11 +19,14 @@ namespace DSS
 
 	void Renderer::init()
 	{
-		std::cout << "Initializing homepage ...." << std::endl;
+		std::cout << "Initializing home page ...." << std::endl;
 		//TODO: Determine if this function should throw an exception if it fails to initialize the object state.
 		load_homepage_api_json();
 		if (_home_json_ptr)
 		{
+			//Load objects needed for rendering text.
+			assert(init_text_dependencies());
+
 			//Generate Vertex Array Object
 			glGenVertexArrays(1, &_vao);
 			glBindVertexArray(_vao);
@@ -60,8 +63,29 @@ namespace DSS
 		std::cout << "Rendering home page ... " << std::endl;
 	}
 
-	void Renderer::init_meshes()
+	bool Renderer::init_text_dependencies()
 	{
+		if (FT_Init_FreeType(&_ft)) {
+			fprintf(stderr, "Could not init freetype library\n");
+			return false;
+		}
+
+		if (FT_New_Face(_ft, "./app/res/fonts/FreeSans.ttf", 0, &_face)) //TODO: copy the file to executable directory
+		{
+			fprintf(stderr, "Could not open font\n");
+			return false;
+		}
+
+		FT_Set_Pixel_Sizes(_face, 0, 48);
+
+		if (FT_Load_Char(_face, 'X', FT_LOAD_RENDER)) {
+			fprintf(stderr, "Could not load character 'X'\n");
+			return false;
+		}
+
+		_glyph_slot = _face->glyph;
+
+		return true;
 	}
 
 	void Renderer::load_homepage_api_json()
@@ -201,28 +225,29 @@ namespace DSS
 	{
 		glUseProgram(_shader_program_id);
 
-		static const float SIZE_OFFSET = 0.3;
-		static const float POS_OFFSET_X = -2.80;
-		static const float POS_OFFSET_Y = 2.3;
+		static const float SIZE_OFFSET = 0.3f;
+		static const float POS_OFFSET_X = -.8f;
+		static const float POS_OFFSET_Y = .7f;
 
 		glBindVertexArray(_vao);
-		
+
+//DRAW TILE GRID
 		float spacing_update_x = 0;
 		float spacing_update_y = 0;
 		size_t rendered_tile_count = 0;
 		size_t rendered_row_count = 0;
 		size_t row_index = 0;
-		size_t column_index = 0;
+		int column_index = 0;
 		size_t column_pos = 0;
 		size_t row_pos = 0;
 
 		while (rendered_row_count < 4 && row_index < _sets.size())//create 4 rows of tiles
 		{
 			row_pos = row_index;
-			while (rendered_tile_count < 5 && column_index < _sets[row_index].tiles.size())//create 5 columns of tiles
+
+			while (rendered_tile_count < 5 && column_index >= 0 && column_index < _sets[row_index].tiles.size())//create 5 columns of tiles
 			{
 				auto& current_tile = _sets[row_index].tiles[column_index];
-				//current_tile.position = { pos_update_x, pos_update_y };
 
 				if (!current_tile.texture)//Ignore any tiles that weren't properly initialized
 				{
@@ -232,14 +257,15 @@ namespace DSS
 				}
 
 				current_tile.position = { row_pos, column_pos };
-				
+				//current_tile.update_in_view();
+
+				//if (!current_tile.in_view)
+					//break;
 
 				//Apply any transformations to tiles
 				glm::mat4 transform(1);//Initialize to identity matrix
-				//transform = glm::translate(transform, glm::vec3(POS_OFFSET_X + spacing_update_x, POS_OFFSET_Y + spacing_update_y, 0.0f));
-				transform = glm::translate(transform, glm::vec3(-.8 + spacing_update_x, .7 + spacing_update_y, 0.0f));
+				transform = glm::translate(transform, glm::vec3(POS_OFFSET_X + spacing_update_x, POS_OFFSET_Y + spacing_update_y, 0.0f));
 				
-
 				if (current_tile.position == _focused_tile_position)//Apply additional scaling to focused tile
 				{
 					current_tile.is_focused = true;
@@ -247,10 +273,10 @@ namespace DSS
 				}
 				else
 				{
+					current_tile.is_focused = false;
 					transform = glm::scale(transform, glm::vec3(SIZE_OFFSET, SIZE_OFFSET, 0.0f));
 				}
 
-				//transform = glm::translate(transform, glm::vec3(POS_OFFSET_X + spacing_update_x, POS_OFFSET_Y + spacing_update_y, 0.0f));
 				GLuint transLoc = glGetUniformLocation(_shader_program_id, "transform");
 				glUniformMatrix4fv(transLoc, 1, GL_FALSE, glm::value_ptr(transform));
 				//
@@ -268,8 +294,7 @@ namespace DSS
 				current_tile.texture->unbind();
 
 				//update counters
-				//spacing_update_x += 1.4;
-				spacing_update_x += 0.4;
+				spacing_update_x += 0.4f;
 				++rendered_tile_count;
 				++column_index;
 				++column_pos;
@@ -281,11 +306,13 @@ namespace DSS
 			column_index = 0;
 			column_pos = 0;
 
-			//spacing_update_y -= 1.4;
-			spacing_update_y -= 0.5;
+			spacing_update_y -= 0.5f;
 			++rendered_row_count;
 			++row_index;
 		}
+
+//END DRAW TILE GRID
+
 		glBindVertexArray(0);
 	}
 
@@ -294,11 +321,62 @@ namespace DSS
 		switch (input)
 		{
 			case ControllerInput::UP:
+			{
+				if (_focused_tile_position.x == 0)//On row 1
+				{
+					std::cout << "Can't move UP any further." << std::endl;
+					check_for_vertical_boundary_hit(_focused_tile_position);
+				}
+				else
+				{
+					--_focused_tile_position.x;
+				}
+				std::cout << "focused_tile_position (" << _focused_tile_position.x << " , " << _focused_tile_position.y << " ) " << std::endl;
+			}
+			break;
+
 			case ControllerInput::DOWN:
+			{
+				if (_focused_tile_position.x == 3)//On row 4
+				{
+					std::cout << "Can't move DOWN any further." << std::endl;
+					check_for_vertical_boundary_hit(_focused_tile_position);
+				}
+				else
+				{
+					++_focused_tile_position.x;
+				}
+				std::cout << "focused_tile_position (" << _focused_tile_position.x << " , " << _focused_tile_position.y << " ) " << std::endl;
+			}
+			break;
+
 			case ControllerInput::LEFT:
+			{
+				if (_focused_tile_position.y == 0)//On column 1
+				{
+					std::cout << "Can't move LEFT any further." << std::endl;
+					check_for_horizontal_boundary_hit(_focused_tile_position);
+				}
+				else
+				{
+					--_focused_tile_position.y;
+				}
+				std::cout << "focused_tile_position (" << _focused_tile_position.x << " , " << _focused_tile_position.y << " ) " << std::endl;
+			}
+			break;
+
 			case ControllerInput::RIGHT:
 			{
-				_focused_tile_position = focused_tile_position;
+				if (_focused_tile_position.y == 4)//On column 5
+				{
+					std::cout << "Can't move RIGHT any further." << std::endl;
+					check_for_horizontal_boundary_hit(_focused_tile_position);
+				}
+				else
+				{
+					++_focused_tile_position.y;
+				}
+				std::cout << "focused_tile_position (" << _focused_tile_position.x << " , " << _focused_tile_position.y << " ) " << std::endl;
 			}
 			break;
 

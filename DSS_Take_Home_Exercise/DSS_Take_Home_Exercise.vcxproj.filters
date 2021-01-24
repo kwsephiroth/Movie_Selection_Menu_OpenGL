@@ -44,6 +44,12 @@
     <ClInclude Include="app\include\renderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="app\include\common_includes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="app\include\text.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="app\res\shaders\vertex_shader.glsl" />

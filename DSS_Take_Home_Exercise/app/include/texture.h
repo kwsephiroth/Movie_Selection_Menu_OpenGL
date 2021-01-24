@@ -11,7 +11,7 @@ namespace DSS
 {
 	class Texture
 	{
-	private:
+	protected:
 		int _width;
 		int _height;
 		GLuint _index;
@@ -23,7 +23,7 @@ namespace DSS
 
 	public:
 		Texture(std::unique_ptr<unsigned char> img_data_ptr, int width, int height);
-		~Texture();
+		virtual ~Texture();
 
 		//No copying
 		Texture(const Texture&) = delete;

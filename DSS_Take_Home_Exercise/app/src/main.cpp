@@ -3,7 +3,6 @@
 #include <GLFW/glfw3.h>
 #include <SOIL2/SOIL2.h>
 #include <glm\glm.hpp>
-//#include <glm\gtc\type_ptr.hpp> // glm::value_ptr
 #include <glm\gtc\matrix_transform.hpp> // glm::translate, glm::rotate, glm::scale, glm::perspective
 #include "renderer.h"
 #include "shader.h"
@@ -84,57 +83,19 @@ static void process_controller_input(DSS::Renderer& renderer)
 
     if (keys[GLFW_KEY_W])
     {
-        if (focused_tile_position.x == 0)//On row 1
-        {
-            std::cout << "Can't move UP any further." << std::endl;
-        }
-        else
-        {
-            --focused_tile_position.x;
-            renderer.process_controller_input(ControllerInput::UP, focused_tile_position);
-            std::cout << "focused_tile_position (" << focused_tile_position.x << " , " << focused_tile_position.y << " ) " << std::endl;
-        }
-        
+        renderer.process_controller_input(ControllerInput::UP, focused_tile_position);
     }
     if (keys[GLFW_KEY_S])
     {
-        if (focused_tile_position.x == 3)//On row 4
-        {
-            std::cout << "Can't move DOWN any further." << std::endl;
-        }
-        else
-        {
-            ++focused_tile_position.x;
-            renderer.process_controller_input(ControllerInput::DOWN, focused_tile_position);
-            std::cout << "focused_tile_position (" << focused_tile_position.x << " , " << focused_tile_position.y << " ) " << std::endl;
-        }
-        
+        renderer.process_controller_input(ControllerInput::DOWN, focused_tile_position);
     }
     if (keys[GLFW_KEY_A])
     {
-        if (focused_tile_position.y == 0)//On column 1
-        {
-            std::cout << "Can't move LEFT any further." << std::endl;
-        }
-        else
-        {
-            --focused_tile_position.y;
-            renderer.process_controller_input(ControllerInput::LEFT, focused_tile_position);
-            std::cout << "focused_tile_position (" << focused_tile_position.x << " , " << focused_tile_position.y << " ) " << std::endl;
-        }
+        renderer.process_controller_input(ControllerInput::LEFT, focused_tile_position);
     }
     if (keys[GLFW_KEY_D])
     {
-        if (focused_tile_position.y == 4)//On column 5
-        {
-            std::cout << "Can't move RIGHT any further." << std::endl;
-        }
-        else
-        {
-            ++focused_tile_position.y;
-            renderer.process_controller_input(ControllerInput::RIGHT, focused_tile_position);
-            std::cout << "focused_tile_position (" << focused_tile_position.x << " , " << focused_tile_position.y << " ) " << std::endl;
-        }
+        renderer.process_controller_input(ControllerInput::RIGHT, focused_tile_position);
     }
 }
 
