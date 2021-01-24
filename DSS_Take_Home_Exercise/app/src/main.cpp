@@ -3,7 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <SOIL2/SOIL2.h>
 #include <glm\glm.hpp>
-#include <glm\gtc\matrix_transform.hpp> // glm::translate, glm::rotate, glm::scale, glm::perspective
+#include <glm\gtc\matrix_transform.hpp>
 #include "renderer.h"
 #include "shader.h"
 #include <atomic>

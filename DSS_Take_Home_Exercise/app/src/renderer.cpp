@@ -13,9 +13,9 @@ namespace DSS
 		init();
 
 		//Initialize tiles frame array
-		for (int i = 0; i < 4; ++i)
+		for (int i = 0; i < MAX_SET_COUNT; ++i)//TODO: Make row count a constant
 		{
-			for (int j = 0; j < 5; ++j)
+			for (int j = 0; j < MAX_TILE_COUNT; ++j)//TODO: Make column count a constant
 			{
 				_row_to_tiles_frame[i][j] = j;
 			}
@@ -34,7 +34,8 @@ namespace DSS
 		if (_home_json_ptr)
 		{
 			//Load objects needed for rendering text.
-			assert(init_text_dependencies());
+			//TODO: Implement text rendering.
+			//assert(init_text_dependencies());
 
 			//Generate Vertex Array Object
 			glGenVertexArrays(1, &_vao);
@@ -242,7 +243,7 @@ namespace DSS
 		static const float SCALE_FACTOR = 0.3f;
 		static const float POS_OFFSET_X = -.8f;
 		static const float POS_OFFSET_Y = .7f;
-		static const float FOCUSED_SCALE_FACTOR = 0.38f;
+		static const float FOCUSED_SCALE_FACTOR = 0.39f;
 
 		glBindVertexArray(_vao);
 
@@ -254,28 +255,28 @@ namespace DSS
 		size_t row_index = 0;
 		size_t row_pos = 0;
 
-		while (rendered_row_count < 4 && row_index < _sets.size())//create 4 rows of tiles
+		while (rendered_row_count < MAX_SET_COUNT && row_index < _sets.size())
 		{
 			row_pos = row_index;
 
 			//Process any tile shifting here
 			//Check tile frame for any invalid indices
-			bool invalid_tile_frame = false;
-			for (int tile_index = 0; tile_index < 5; ++tile_index)
+			bool invalid_tiles_frame = false;
+			for (int tile_index = 0; tile_index < MAX_TILE_COUNT; ++tile_index)
 			{
 				int current_index = _row_to_tiles_frame[row_index][tile_index];
 				if (current_index < 0 || current_index >= _sets[row_index].tiles.size())//INVALID FRAME DETECTED
 				{
-					invalid_tile_frame = true;
+					invalid_tiles_frame = true;
 					break;
 				}
 			}
 
-			if (invalid_tile_frame)
+			if (invalid_tiles_frame)
 				continue;//Skip rendering for this row
 
 
-			for(int tile_index = 0; tile_index < 5; ++tile_index)//TODO: Make tile count a constant
+			for(int tile_index = 0; tile_index < MAX_TILE_COUNT; ++tile_index)
 			{
 				if (tile_index >= _sets[row_index].tiles.size())
 					break;
@@ -283,6 +284,7 @@ namespace DSS
 				int frame_index = _row_to_tiles_frame[row_index][tile_index];
 				auto& current_tile = _sets[row_index].tiles[frame_index];
 				current_tile.position = { row_pos, tile_index };
+				//std::cout << "current_tile.position = (" << current_tile.position.x << " , " << current_tile.position.y << " )" << std::endl;
 
 				//Apply any transformations to tiles
 				glm::mat4 transform(1);//Initialize to identity matrix
@@ -316,7 +318,7 @@ namespace DSS
 				current_tile.texture->unbind();
 
 				//update counters
-				spacing_update_x += 0.4f;
+				spacing_update_x += 0.37f;
 			}
 
 			spacing_update_x = 0;
@@ -324,21 +326,20 @@ namespace DSS
 			++rendered_row_count;
 			++row_index;
 		}
-
 //END DRAW TILE GRID
 
 		glBindVertexArray(0);
 	}
 
-	void Renderer::process_controller_input(const ControllerInput input)// , const glm::vec2& focused_tile_position)//TODO: Determine if this callback is thread-safe. this will update a current position member.
+	void Renderer::process_controller_input(const ControllerInput input)
 	{
 		switch (input)
 		{
 			case ControllerInput::UP:
 			{
-				if (_focused_tile_position.x == 0)//On row 1
+				if (_focused_tile_position.x == SETS_UPPER_BOUNDARY_X)
 				{
-					std::cout << "Can't move UP any further." << std::endl;
+					//std::cout << "Can't move UP any further." << std::endl;
 					check_for_vertical_boundary_hit(_focused_tile_position);
 				}
 				else
@@ -350,9 +351,9 @@ namespace DSS
 
 			case ControllerInput::DOWN:
 			{
-				if (_focused_tile_position.x == 3)//On row 4
+				if (_focused_tile_position.x == SETS_LOWER_BOUNDARY_X)
 				{
-					std::cout << "Can't move DOWN any further." << std::endl;
+					//std::cout << "Can't move DOWN any further." << std::endl;
 					check_for_vertical_boundary_hit(_focused_tile_position);
 				}
 				else
@@ -364,9 +365,9 @@ namespace DSS
 
 			case ControllerInput::LEFT:
 			{
-				if (_focused_tile_position.y == 0)//On column 1
+				if (_focused_tile_position.y == TILES_LEFT_BOUNDARY_Y)
 				{
-					std::cout << "Can't move LEFT any further." << std::endl;
+					//std::cout << "Can't move LEFT any further." << std::endl;
 					check_for_horizontal_boundary_hit(_focused_tile_position);
 				}
 				else
@@ -378,9 +379,9 @@ namespace DSS
 
 			case ControllerInput::RIGHT:
 			{
-				if (_focused_tile_position.y == 4)//On column 5
+				if (_focused_tile_position.y == TILES_RIGHT_BOUNDARY_Y)
 				{
-					std::cout << "Can't move RIGHT any further." << std::endl;
+					//std::cout << "Can't move RIGHT any further." << std::endl;
 					check_for_horizontal_boundary_hit(_focused_tile_position);
 				}
 				else
@@ -414,14 +415,14 @@ namespace DSS
 
 	void Renderer::check_for_horizontal_boundary_hit(const glm::vec2& pos)
 	{
-		if (pos.y == 0)
+		if (pos.y == TILES_LEFT_BOUNDARY_Y)
 		{
-			std::cout << "Horizontal Boundary Hit Detected!" << std::endl;
+			//std::cout << "Horizontal Boundary Hit Detected!" << std::endl;
 			//shift tiles right
-			if (_row_to_tiles_frame[(int)pos.x][0] == 0)//DON'T UPDATE FRAME!!!
+			if (_row_to_tiles_frame[(int)pos.x][0] == TILES_LEFT_BOUNDARY_Y)//DON'T UPDATE FRAME!!!
 				return;
 
-			for (int tile_index = 0; tile_index < 5; ++tile_index)
+			for (int tile_index = 0; tile_index < MAX_TILE_COUNT; ++tile_index)
 			{
 				int new_index = _row_to_tiles_frame[(int)pos.x][tile_index] - 1;
 				if (new_index < 0)//new index out of range of current row//DON'T ADD INVALID INDEX
@@ -434,18 +435,20 @@ namespace DSS
 				}
 			}
 		}
-		else if (pos.y == 4)
+		else if (pos.y == TILES_RIGHT_BOUNDARY_Y)
 		{
-			std::cout << "Horizontal Boundary Hit Detected!" << std::endl;
+			//std::cout << "Horizontal Boundary Hit Detected!" << std::endl;
+
+			auto current_row_tile_count = _sets[(int)pos.x].tiles.size();
 
 			//shift tiles left
-			if (_row_to_tiles_frame[(int)pos.x][4] == (_sets[(int)pos.x].tiles.size() - 1))//DON'T UPDATE FRAME!!!
+			if (_row_to_tiles_frame[(int)pos.x][MAX_TILE_COUNT - 1] == (current_row_tile_count - 1))//DON'T UPDATE FRAME!!!
 				return;
 
-			for (int tile_index = 0; tile_index < 5; ++tile_index)
+			for (int tile_index = 0; tile_index < MAX_TILE_COUNT; ++tile_index)
 			{
 				int new_index = _row_to_tiles_frame[(int)pos.x][tile_index] + 1;
-				if (new_index >= _sets[(int)pos.x].tiles.size())//new index out of range of current row //DON'T ADD INVALID INDEX
+				if (new_index >= current_row_tile_count)//new index out of range of current row //DON'T ADD INVALID INDEX
 				{
 					return;
 				}
@@ -459,14 +462,14 @@ namespace DSS
 
 	void Renderer::check_for_vertical_boundary_hit(const glm::vec2& pos)
 	{
-		if (pos.x == 0)
+		if (pos.x == SETS_UPPER_BOUNDARY_X)
 		{
-			std::cout << "Vertical Boundary Hit Detected!" << std::endl;
+			//std::cout << "Vertical Boundary Hit Detected!" << std::endl;
 			//shift tiles down
 		}
-		else if (pos.x == 3)
+		else if (pos.x == SETS_LOWER_BOUNDARY_X)
 		{
-			std::cout << "Vertical Boundary Hit Detected!" << std::endl;
+			//std::cout << "Vertical Boundary Hit Detected!" << std::endl;
 			//shift tiles up
 		}
 	}
