@@ -11,6 +11,15 @@ namespace DSS
 		_texture_coord_attrib_location(texture_coordinate_attrib_location)
 	{
 		init();
+
+		//Initialize tiles frame array
+		for (int i = 0; i < 4; ++i)
+		{
+			for (int j = 0; j < 5; ++j)
+			{
+				_row_to_tiles_frame[i][j] = j;
+			}
+		}
 	}
 
 	Renderer::~Renderer()
@@ -182,14 +191,19 @@ namespace DSS
 	{
 		for (auto& set : _sets)
 		{	
-			for (auto& tile : set.tiles)
+			//for (auto& tile : set.tiles)
+			for(auto itr = set.tiles.begin(); itr != set.tiles.end();)
 			{
-				auto texture_ptr = download_texture(tile.image_url.c_str());
+				auto texture_ptr = download_texture(itr->image_url.c_str());
 				if (!texture_ptr)//Skip any textures that couldn't be successfully downloaded.
 				{
-					continue;
+					itr = set.tiles.erase(itr);
 				}
-				tile.texture = std::move(texture_ptr);
+				else
+				{
+					itr->texture = std::move(texture_ptr);
+					++itr;
+				}
 			}
 		}
 	}
@@ -245,22 +259,47 @@ namespace DSS
 		{
 			row_pos = row_index;
 
-			while (rendered_tile_count < 5 && column_index >= 0 && column_index < _sets[row_index].tiles.size())//create 5 columns of tiles
+			//TODO: Process any tile shift here
+			//TODO: Check tile frame for any invalid indices
+			bool invalid_tile_frame = false;
+			for (int tile_index = 0; tile_index < 5; ++tile_index)
 			{
-				auto& current_tile = _sets[row_index].tiles[column_index];
-
-				if (!current_tile.texture)//Ignore any tiles that weren't properly initialized
+				int current_index = _row_to_tiles_frame[row_index][tile_index];
+				if (current_index < 0 || current_index >= _sets[row_index].tiles.size())//INVALID FRAME DETECTED
 				{
-					column_pos = column_index;
-					++column_index;
-					continue;
+					invalid_tile_frame = true;
+					break;
 				}
+			}
 
-				current_tile.position = { row_pos, column_pos };
-				//current_tile.update_in_view();
+			if (invalid_tile_frame)
+				continue;//Skip rendering for this row
 
-				//if (!current_tile.in_view)
-					//break;
+			//This loop only moves forward through tile collection
+			//while (rendered_tile_count < 5 && column_index >= 0 && column_index < _sets[row_index].tiles.size())//create 5 columns of tiles
+			//while(column_index >= 0 && column_index < _sets[row_index].tiles.size())
+			for(int tile_index = 0; tile_index < 5; ++tile_index)
+			{
+				if (tile_index >= _sets[row_index].tiles.size())
+					continue;
+
+				int frame_index = _row_to_tiles_frame[row_index][tile_index];
+
+				if (frame_index >= _sets[row_index].tiles.size())
+					continue;
+
+				//auto& current_tile = _sets[row_index].tiles[column_index];
+				auto& current_tile = _sets[row_index].tiles[frame_index];
+
+				//if (!current_tile.texture)//Ignore any tiles that weren't properly initialized
+				//{
+				//	//column_pos = column_index;
+				//	++column_index;
+				//	continue;
+				//}
+
+				//current_tile.position = { row_pos, column_pos };
+				current_tile.position = { row_pos, tile_index };
 
 				//Apply any transformations to tiles
 				glm::mat4 transform(1);//Initialize to identity matrix
@@ -316,7 +355,7 @@ namespace DSS
 		glBindVertexArray(0);
 	}
 
-	void Renderer::process_controller_input(const ControllerInput input, const glm::vec2& focused_tile_position)//TODO: Determine if this callback is thread-safe. this will update a current position member.
+	void Renderer::process_controller_input(const ControllerInput input)// , const glm::vec2& focused_tile_position)//TODO: Determine if this callback is thread-safe. this will update a current position member.
 	{
 		switch (input)
 		{
@@ -330,6 +369,8 @@ namespace DSS
 				else
 				{
 					--_focused_tile_position.x;
+					_shift_tiles_vertical = false;
+					_shift_y_offset = 0;
 				}
 				std::cout << "focused_tile_position (" << _focused_tile_position.x << " , " << _focused_tile_position.y << " ) " << std::endl;
 			}
@@ -345,6 +386,8 @@ namespace DSS
 				else
 				{
 					++_focused_tile_position.x;
+					_shift_tiles_vertical = false;
+					_shift_y_offset = 0;
 				}
 				std::cout << "focused_tile_position (" << _focused_tile_position.x << " , " << _focused_tile_position.y << " ) " << std::endl;
 			}
@@ -360,6 +403,8 @@ namespace DSS
 				else
 				{
 					--_focused_tile_position.y;
+					_shift_tiles_horizontal = false;
+					_shift_x_offset = 0;
 				}
 				std::cout << "focused_tile_position (" << _focused_tile_position.x << " , " << _focused_tile_position.y << " ) " << std::endl;
 			}
@@ -375,6 +420,8 @@ namespace DSS
 				else
 				{
 					++_focused_tile_position.y;
+					_shift_tiles_horizontal = false;
+					_shift_x_offset = 0;
 				}
 				std::cout << "focused_tile_position (" << _focused_tile_position.x << " , " << _focused_tile_position.y << " ) " << std::endl;
 			}
@@ -397,5 +444,80 @@ namespace DSS
 				std::cerr << "ERROR: Invalid controller input detected." << std::endl;
 			}
 		}
+	}
+
+	bool Renderer::check_for_horizontal_boundary_hit(const glm::vec2& pos)
+	{
+		if (pos.y == 0)
+		{
+			std::cout << "Boundary Hit Detected!" << std::endl;
+			//shift tiles right
+			_shift_tiles_horizontal = true;
+			--_shift_x_offset;
+
+			for (int tile_index = 0; tile_index < 5; ++tile_index)
+			{
+				int new_index = _row_to_tiles_frame[(int)pos.x][tile_index] - 1;
+				if (new_index < 0)//new index out of range of current row
+				{
+					//_row_to_tiles_frame[(int)pos.x][tile_index] = _sets[(int)pos.x].tiles.size() - 1;
+					return true;
+				}
+				else
+				{
+					_row_to_tiles_frame[(int)pos.x][tile_index] = new_index;
+				}
+			}
+			return true;
+		}
+		else if (pos.y == 4)
+		{
+			std::cout << "Boundary Hit Detected!" << std::endl;
+			//shift tiles left
+			_shift_tiles_horizontal = true;
+			++_shift_x_offset;
+
+			if (_row_to_tiles_frame[(int)pos.x][4] == _sets[(int)pos.x].tiles.size() - 1)//DON'T UPDATE FRAME!!!
+				return true;
+
+			for (int tile_index = 0; tile_index < 5; ++tile_index)
+			{
+				int new_index = _row_to_tiles_frame[(int)pos.x][tile_index] + 1;
+				if (new_index >= _sets[(int)pos.x].tiles.size())//new index out of range of current row
+				{
+					return true;
+					//_row_to_tiles_frame[(int)pos.x][tile_index] = _sets[(int)pos.x].tiles.size() - 1;
+				}
+				else
+				{
+					_row_to_tiles_frame[(int)pos.x][tile_index] = new_index;
+				}
+			}
+			return true;
+		}
+
+		return false;
+	}
+
+	bool Renderer::check_for_vertical_boundary_hit(const glm::vec2& pos)
+	{
+		if (pos.x == 0)
+		{
+			std::cout << "Boundary Hit Detected!" << std::endl;
+			//shift tiles down
+			_shift_tiles_vertical = true;
+			--_shift_y_offset;
+			return true;
+		}
+		else if (pos.x == 3)
+		{
+			std::cout << "Boundary Hit Detected!" << std::endl;
+			//shift tiles up
+			_shift_tiles_vertical = true;
+			++_shift_y_offset;
+			return true;
+		}
+
+		return false;
 	}
 }

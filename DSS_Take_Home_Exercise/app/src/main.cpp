@@ -83,19 +83,19 @@ static void process_controller_input(DSS::Renderer& renderer)
 
     if (keys[GLFW_KEY_W])
     {
-        renderer.process_controller_input(ControllerInput::UP, focused_tile_position);
+        renderer.process_controller_input(ControllerInput::UP);// , focused_tile_position);
     }
     if (keys[GLFW_KEY_S])
     {
-        renderer.process_controller_input(ControllerInput::DOWN, focused_tile_position);
+        renderer.process_controller_input(ControllerInput::DOWN);// , focused_tile_position);
     }
     if (keys[GLFW_KEY_A])
     {
-        renderer.process_controller_input(ControllerInput::LEFT, focused_tile_position);
+        renderer.process_controller_input(ControllerInput::LEFT);// , focused_tile_position);
     }
     if (keys[GLFW_KEY_D])
     {
-        renderer.process_controller_input(ControllerInput::RIGHT, focused_tile_position);
+        renderer.process_controller_input(ControllerInput::RIGHT);// , focused_tile_position);
     }
 }
 

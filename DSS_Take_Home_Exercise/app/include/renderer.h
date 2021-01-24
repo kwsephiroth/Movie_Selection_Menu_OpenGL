@@ -18,6 +18,7 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include <iostream>
+#include <unordered_map>
 
 namespace DSS
 {
@@ -94,7 +95,7 @@ namespace DSS
 		FT_Face _face;
 		FT_GlyphSlot _glyph_slot;
 		glm::vec2 _boundary_pos = { 0, 0 };
-
+		unsigned int _row_to_tiles_frame[4][5];
 		bool _shift_tiles_horizontal = false;
 		bool _shift_tiles_vertical = false;
 		int _shift_y_offset = 0;
@@ -107,6 +108,8 @@ namespace DSS
 		void init_menu_grid();
 		bool init_text_dependencies();
 		std::unique_ptr<Texture> download_texture(const char*);
+		bool check_for_horizontal_boundary_hit(const glm::vec2& pos);
+		bool check_for_vertical_boundary_hit(const glm::vec2& pos);
 
 	public:
 		Renderer(unsigned int shader_program_id,
@@ -116,51 +119,7 @@ namespace DSS
 		~Renderer();
 		bool get_is_initialized() const { return _initialized; }
 		void draw_home_page();
-		void process_controller_input(const ControllerInput, const glm::vec2&);
-
-		bool check_for_horizontal_boundary_hit(const glm::vec2& pos)
-		{
-			if (pos.y == 0)
-			{
-				std::cout << "Boundary Hit Detected!" << std::endl;
-				//shift tiles right
-				_shift_tiles_horizontal = true;
-				--_shift_x_offset;
-				return true;
-			}
-			else if (pos.y == 4)
-			{
-				std::cout << "Boundary Hit Detected!" << std::endl;
-				//shift tiles left
-				_shift_tiles_horizontal = true;
-				++_shift_x_offset;
-				return true;
-			}
-
-			return false;
-		}
-
-		bool check_for_vertical_boundary_hit(const glm::vec2& pos)
-		{
-			if (pos.x == 0)
-			{
-				std::cout << "Boundary Hit Detected!" << std::endl;
-				//shift tiles down
-				_shift_tiles_vertical = true;
-				--_shift_y_offset;
-				return true;
-			}
-			else if (pos.x == 3)
-			{
-				std::cout << "Boundary Hit Detected!" << std::endl;
-				//shift tiles up
-				_shift_tiles_vertical = true;
-				++_shift_y_offset;
-				return true;
-			}
-
-			return false;
-		}
+		void process_controller_input(const ControllerInput);// , const glm::vec2&);
 
 		GLuint get_vao() const { return _vao; }
 	};
