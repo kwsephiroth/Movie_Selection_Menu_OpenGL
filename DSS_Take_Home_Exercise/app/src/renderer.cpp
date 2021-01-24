@@ -451,16 +451,18 @@ namespace DSS
 		if (pos.y == 0)
 		{
 			std::cout << "Boundary Hit Detected!" << std::endl;
+			if (_row_to_tiles_frame[(int)pos.x][0] == 0)//DON'T UPDATE FRAME!!!
+				return true;
 			//shift tiles right
-			_shift_tiles_horizontal = true;
-			--_shift_x_offset;
+			//_shift_tiles_horizontal = true;
+			//--_shift_x_offset;
 
 			for (int tile_index = 0; tile_index < 5; ++tile_index)
 			{
 				int new_index = _row_to_tiles_frame[(int)pos.x][tile_index] - 1;
 				if (new_index < 0)//new index out of range of current row
 				{
-					//_row_to_tiles_frame[(int)pos.x][tile_index] = _sets[(int)pos.x].tiles.size() - 1;
+					_row_to_tiles_frame[(int)pos.x][tile_index] = _sets[(int)pos.x].tiles.size() - 1;
 					return true;
 				}
 				else
@@ -474,23 +476,20 @@ namespace DSS
 		{
 			std::cout << "Boundary Hit Detected!" << std::endl;
 			//shift tiles left
-			_shift_tiles_horizontal = true;
-			++_shift_x_offset;
-
-			if (_row_to_tiles_frame[(int)pos.x][4] == _sets[(int)pos.x].tiles.size() - 1)//DON'T UPDATE FRAME!!!
+			if (_row_to_tiles_frame[(int)pos.x][4] == (_sets[(int)pos.x].tiles.size() - 1))//DON'T UPDATE FRAME!!!
 				return true;
 
 			for (int tile_index = 0; tile_index < 5; ++tile_index)
 			{
 				int new_index = _row_to_tiles_frame[(int)pos.x][tile_index] + 1;
-				if (new_index >= _sets[(int)pos.x].tiles.size())//new index out of range of current row
+				if (new_index >= _sets[(int)pos.x].tiles.size())//new index out of range of current row //DON'T ADD INVALID INDEX
 				{
 					return true;
 					//_row_to_tiles_frame[(int)pos.x][tile_index] = _sets[(int)pos.x].tiles.size() - 1;
 				}
 				else
 				{
-					_row_to_tiles_frame[(int)pos.x][tile_index] = new_index;
+				  _row_to_tiles_frame[(int)pos.x][tile_index] = new_index;
 				}
 			}
 			return true;
