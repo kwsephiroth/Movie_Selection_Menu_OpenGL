@@ -239,9 +239,10 @@ namespace DSS
 	{
 		glUseProgram(_shader_program_id);
 
-		static const float SIZE_OFFSET = 0.3f;
+		static const float SCALE_FACTOR = 0.3f;
 		static const float POS_OFFSET_X = -.8f;
 		static const float POS_OFFSET_Y = .7f;
+		static const float FOCUSED_SCALE_FACTOR = 0.38f;
 
 		glBindVertexArray(_vao);
 
@@ -259,8 +260,8 @@ namespace DSS
 		{
 			row_pos = row_index;
 
-			//TODO: Process any tile shift here
-			//TODO: Check tile frame for any invalid indices
+			//Process any tile shifting here
+			//Check tile frame for any invalid indices
 			bool invalid_tile_frame = false;
 			for (int tile_index = 0; tile_index < 5; ++tile_index)
 			{
@@ -275,30 +276,14 @@ namespace DSS
 			if (invalid_tile_frame)
 				continue;//Skip rendering for this row
 
-			//This loop only moves forward through tile collection
-			//while (rendered_tile_count < 5 && column_index >= 0 && column_index < _sets[row_index].tiles.size())//create 5 columns of tiles
-			//while(column_index >= 0 && column_index < _sets[row_index].tiles.size())
+
 			for(int tile_index = 0; tile_index < 5; ++tile_index)
 			{
 				if (tile_index >= _sets[row_index].tiles.size())
-					continue;
+					break;
 
 				int frame_index = _row_to_tiles_frame[row_index][tile_index];
-
-				if (frame_index >= _sets[row_index].tiles.size())
-					continue;
-
-				//auto& current_tile = _sets[row_index].tiles[column_index];
 				auto& current_tile = _sets[row_index].tiles[frame_index];
-
-				//if (!current_tile.texture)//Ignore any tiles that weren't properly initialized
-				//{
-				//	//column_pos = column_index;
-				//	++column_index;
-				//	continue;
-				//}
-
-				//current_tile.position = { row_pos, column_pos };
 				current_tile.position = { row_pos, tile_index };
 
 				//Apply any transformations to tiles
@@ -308,12 +293,12 @@ namespace DSS
 				if (current_tile.position == _focused_tile_position)//Apply additional scaling to focused tile
 				{
 					current_tile.is_focused = true;
-					transform = glm::scale(transform, glm::vec3(0.38f, 0.38f, 0.0f));
+					transform = glm::scale(transform, glm::vec3(FOCUSED_SCALE_FACTOR, FOCUSED_SCALE_FACTOR, 0.0f));
 				}
 				else
 				{
 					current_tile.is_focused = false;
-					transform = glm::scale(transform, glm::vec3(SIZE_OFFSET, SIZE_OFFSET, 0.0f));
+					transform = glm::scale(transform, glm::vec3(SCALE_FACTOR, SCALE_FACTOR, 0.0f));
 				}
 
 				GLuint transLoc = glGetUniformLocation(_shader_program_id, "transform");
@@ -334,17 +319,9 @@ namespace DSS
 
 				//update counters
 				spacing_update_x += 0.4f;
-				++rendered_tile_count;
-				++column_index;
-				++column_pos;
 			}
 
-			//reset column counts
 			spacing_update_x = 0;
-			rendered_tile_count = 0;
-			column_index = 0;
-			column_pos = 0;
-
 			spacing_update_y -= 0.5f;
 			++rendered_row_count;
 			++row_index;
@@ -453,9 +430,6 @@ namespace DSS
 			std::cout << "Boundary Hit Detected!" << std::endl;
 			if (_row_to_tiles_frame[(int)pos.x][0] == 0)//DON'T UPDATE FRAME!!!
 				return true;
-			//shift tiles right
-			//_shift_tiles_horizontal = true;
-			//--_shift_x_offset;
 
 			for (int tile_index = 0; tile_index < 5; ++tile_index)
 			{
@@ -504,16 +478,12 @@ namespace DSS
 		{
 			std::cout << "Boundary Hit Detected!" << std::endl;
 			//shift tiles down
-			_shift_tiles_vertical = true;
-			--_shift_y_offset;
 			return true;
 		}
 		else if (pos.x == 3)
 		{
 			std::cout << "Boundary Hit Detected!" << std::endl;
 			//shift tiles up
-			_shift_tiles_vertical = true;
-			++_shift_y_offset;
 			return true;
 		}
 
