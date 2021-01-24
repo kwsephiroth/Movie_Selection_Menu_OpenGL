@@ -13,9 +13,9 @@ namespace DSS
 		init();
 
 		//Initialize tiles frame array
-		for (int i = 0; i < MAX_SET_COUNT; ++i)//TODO: Make row count a constant
+		for (int i = 0; i < MAX_SETS_RENDERED; ++i)//TODO: Make row count a constant
 		{
-			for (int j = 0; j < MAX_TILE_COUNT; ++j)//TODO: Make column count a constant
+			for (int j = 0; j < MAX_TILES_RENDERED; ++j)//TODO: Make column count a constant
 			{
 				_row_to_tiles_frame[i][j] = j;
 			}
@@ -236,6 +236,72 @@ namespace DSS
 		return nullptr;
 	}
 
+	void Renderer::load_all_reference_sets()
+	{
+		for (const auto& ref_set_info : _ref_sets_info)
+		{
+			load_reference_set(ref_set_info);
+		}
+	}
+
+	void Renderer::load_reference_set(const Ref_Set_Info& ref_set_info)
+	{
+		auto file_memory_ptr = curl_utils::download_file_to_memory(ref_set_info.ref_set_url.c_str());
+		auto ref_set_json_ptr = Utils::get_rj_document(file_memory_ptr->memory);
+		
+		if (!ref_set_json_ptr) //Something went wrong trying to fetch this ref set so give up
+			return;
+
+		//Parse ref set json and append to sets collection
+		Set dss_set;
+		dss_set.name = ref_set_info.name;
+
+		std::string items_arr_path = "/data/CuratedSet/items/";
+		const auto items_arr_ptr = rapidjson::GetValueByPointer(*_home_json_ptr, rapidjson::Pointer(items_arr_path.c_str()));
+		if (items_arr_ptr && !items_arr_ptr->IsNull())
+		{
+			if (items_arr_ptr->IsArray())
+			{
+				const auto& items_arr = items_arr_ptr->GetArray();
+				for (size_t j = 0; j < items_arr.Size(); ++j)
+				{
+					std::string full_image_data_path = items_arr_path + std::to_string(j) +
+						"/image/tile/1.78";//TODO: Determine what the integer member of the "tile" object represents.
+
+					auto image_data_ptr = rapidjson::GetValueByPointer(*_home_json_ptr, rapidjson::Pointer(full_image_data_path.c_str()));
+
+					if (image_data_ptr && !image_data_ptr->IsNull())
+					{
+						std::string item_type = image_data_ptr->MemberBegin()->name.GetString();
+						full_image_data_path += ("/" + item_type + "/default");
+						image_data_ptr = rapidjson::GetValueByPointer(*_home_json_ptr, rapidjson::Pointer(full_image_data_path.c_str()));
+						if (image_data_ptr && !image_data_ptr->IsNull())
+						{
+							//TODO: Store image url, width, and height
+							if (image_data_ptr->IsObject())
+							{
+								//TODO: Determine what happens if these members don't exist
+								const auto image_url_ptr = image_data_ptr->FindMember("url");
+								const auto image_width_ptr = image_data_ptr->FindMember("masterWidth");
+								const auto image_height_ptr = image_data_ptr->FindMember("masterHeight");
+
+								if (!image_url_ptr->value.IsString() || !image_width_ptr->value.IsInt() || !image_height_ptr->value.IsInt())
+									continue;
+
+								dss_set.tiles.push_back({ image_url_ptr->value.GetString(),
+									image_width_ptr->value.GetInt(),
+									image_height_ptr->value.GetInt(),
+									nullptr });
+
+							}
+						}
+					}
+				}
+			}
+			_sets.push_back(std::move(dss_set));
+		}
+	}
+
 	void Renderer::draw_home_page()
 	{
 		glUseProgram(_shader_program_id);
@@ -255,14 +321,14 @@ namespace DSS
 		size_t row_index = 0;
 		size_t row_pos = 0;
 
-		while (rendered_row_count < MAX_SET_COUNT && row_index < _sets.size())
+		while (rendered_row_count < MAX_SETS_RENDERED && row_index < _sets.size())
 		{
 			row_pos = row_index;
 
 			//Process any tile shifting here
 			//Check tile frame for any invalid indices
 			bool invalid_tiles_frame = false;
-			for (int tile_index = 0; tile_index < MAX_TILE_COUNT; ++tile_index)
+			for (int tile_index = 0; tile_index < MAX_TILES_RENDERED; ++tile_index)
 			{
 				int current_index = _row_to_tiles_frame[row_index][tile_index];
 				if (current_index < 0 || current_index >= _sets[row_index].tiles.size())//INVALID FRAME DETECTED
@@ -276,7 +342,7 @@ namespace DSS
 				continue;//Skip rendering for this row
 
 
-			for(int tile_index = 0; tile_index < MAX_TILE_COUNT; ++tile_index)
+			for(int tile_index = 0; tile_index < MAX_TILES_RENDERED; ++tile_index)
 			{
 				if (tile_index >= _sets[row_index].tiles.size())
 					break;
@@ -422,7 +488,7 @@ namespace DSS
 			if (_row_to_tiles_frame[(int)pos.x][0] == TILES_LEFT_BOUNDARY_Y)//DON'T UPDATE FRAME!!!
 				return;
 
-			for (int tile_index = 0; tile_index < MAX_TILE_COUNT; ++tile_index)
+			for (int tile_index = 0; tile_index < MAX_TILES_RENDERED; ++tile_index)
 			{
 				int new_index = _row_to_tiles_frame[(int)pos.x][tile_index] - 1;
 				if (new_index < 0)//new index out of range of current row//DON'T ADD INVALID INDEX
@@ -442,10 +508,10 @@ namespace DSS
 			auto current_row_tile_count = _sets[(int)pos.x].tiles.size();
 
 			//shift tiles left
-			if (_row_to_tiles_frame[(int)pos.x][MAX_TILE_COUNT - 1] == (current_row_tile_count - 1))//DON'T UPDATE FRAME!!!
+			if (_row_to_tiles_frame[(int)pos.x][MAX_TILES_RENDERED - 1] == (current_row_tile_count - 1))//DON'T UPDATE FRAME!!!
 				return;
 
-			for (int tile_index = 0; tile_index < MAX_TILE_COUNT; ++tile_index)
+			for (int tile_index = 0; tile_index < MAX_TILES_RENDERED; ++tile_index)
 			{
 				int new_index = _row_to_tiles_frame[(int)pos.x][tile_index] + 1;
 				if (new_index >= current_row_tile_count)//new index out of range of current row //DON'T ADD INVALID INDEX

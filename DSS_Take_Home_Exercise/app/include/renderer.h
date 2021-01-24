@@ -74,7 +74,7 @@ namespace DSS
 		FT_Face _face;
 		FT_GlyphSlot _glyph_slot;
 		glm::vec2 _boundary_pos = { 0, 0 };
-		unsigned int _row_to_tiles_frame[MAX_SET_COUNT][MAX_TILE_COUNT];
+		unsigned int _row_to_tiles_frame[MAX_SETS_RENDERED][MAX_TILES_RENDERED];
 		bool _shift_tiles_horizontal = false;
 		bool _shift_tiles_vertical = false;
 		int _shift_y_offset = 0;
@@ -87,6 +87,8 @@ namespace DSS
 		std::unique_ptr<Texture> download_texture(const char*);
 		void check_for_horizontal_boundary_hit(const glm::vec2& pos);
 		void check_for_vertical_boundary_hit(const glm::vec2& pos);
+		void load_all_reference_sets();
+		void load_reference_set(const Ref_Set_Info&);
 
 	public:
 		Renderer(unsigned int shader_program_id,

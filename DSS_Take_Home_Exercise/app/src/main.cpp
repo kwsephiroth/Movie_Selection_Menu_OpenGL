@@ -46,7 +46,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
     if (key >= 0 && key < 1024)
     {
-        if (action == GLFW_PRESS)
+        if (action == GLFW_PRESS || action == GLFW_REPEAT)
         {
             keys[key] = true;
             new_key_pressed.store(true);
