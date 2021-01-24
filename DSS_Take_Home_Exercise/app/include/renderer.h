@@ -17,6 +17,7 @@
 #include "text.h"
 #include <iostream>
 #include <map>
+#include <queue>
 #include <ft2build.h>
 #include FT_FREETYPE_H 
 
@@ -60,7 +61,6 @@ namespace DSS
 	private:
 		std::unique_ptr<rapidjson::Document> _home_json_ptr;//TODO: Consider having this dependency injected through constructor.
 		std::vector<Set> _sets;
-		std::vector<Ref_Set_Info> _ref_sets_info;
 		bool _initialized = false;
 		GLuint _vao;
 		GLuint _tile_pos_vbo;
@@ -73,11 +73,13 @@ namespace DSS
 		glm::vec2 _focused_tile_position = INIT_FOCUSED_TILE_POSITION;
 		glm::vec2 _boundary_pos = { 0, 0 };
 		int _row_to_tiles_frame[MAX_SETS_RENDERED][MAX_TILES_RENDERED];
+		int _row_indices[MAX_SETS_RENDERED];
 		bool _shift_tiles_horizontal = false;
 		bool _shift_tiles_vertical = false;
 		int _shift_y_offset = 0;
 		int _shift_x_offset = 0;
 		std::map<GLchar, Character> _characters;
+		std::queue<Ref_Set_Info> _ref_sets_info;
 
 		void init();
 		void load_textures();
@@ -89,6 +91,7 @@ namespace DSS
 		void load_all_reference_sets();
 		void load_reference_set(const Ref_Set_Info&);
 		void render_text(std::string text, float x, float y, float scale, glm::vec3 color);
+		bool consume_ref_set();
 
 	public:
 		Renderer(unsigned int shader_program_id,

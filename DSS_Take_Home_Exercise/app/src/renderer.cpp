@@ -12,6 +12,12 @@ namespace DSS
 	{
 		init();
 
+		//Initialize row frame array
+		for (int i = 0; i < MAX_SETS_RENDERED; ++i)
+		{
+			_row_indices[i] = i;
+		}
+
 		//Initialize tiles frame array
 		for (int i = 0; i < MAX_SETS_RENDERED; ++i)//TODO: Make row count a constant
 		{
@@ -250,12 +256,13 @@ namespace DSS
 
 								if (image_data_ptr && !image_data_ptr->IsNull())
 								{
+									//TODO: Make this member check safe
 									std::string item_type = image_data_ptr->MemberBegin()->name.GetString();
+
 									full_image_data_path += ("/" + item_type + "/default");
 									image_data_ptr = rapidjson::GetValueByPointer(*_home_json_ptr, rapidjson::Pointer(full_image_data_path.c_str()));
 									if (image_data_ptr && !image_data_ptr->IsNull())
 									{
-										//TODO: Store image url, width, and height
 										if (image_data_ptr->IsObject())
 										{
 											//TODO: Determine what happens if these members don't exist
@@ -273,8 +280,20 @@ namespace DSS
 
 										}
 									}
+									else
+									{
+										continue;
+									}
+								}
+								else
+								{
+									continue;
 								}
 							}
+						}
+						else
+						{
+							continue;
 						}
 						_sets.push_back(std::move(dss_set));
 					}
@@ -289,7 +308,7 @@ namespace DSS
 						Ref_Set_Info ref_set;
 						ref_set.name = std::move(dss_set.name);
 						ref_set.ref_set_url = DSS::REF_SETS_URL_PREFIX + std::string(ref_id_ptr->GetString()) + ".json";
-						_ref_sets_info.push_back(std::move(ref_set));
+						_ref_sets_info.push(std::move(ref_set));
 					}
 				}//sets
 			}
@@ -346,10 +365,22 @@ namespace DSS
 
 	void Renderer::load_all_reference_sets()
 	{
-		for (const auto& ref_set_info : _ref_sets_info)
+		while (!_ref_sets_info.empty())
 		{
-			load_reference_set(ref_set_info);
+			load_reference_set(_ref_sets_info.front());
+			_ref_sets_info.pop();
 		}
+	}
+
+	bool Renderer::consume_ref_set()
+	{
+		if (!_ref_sets_info.empty())
+		{
+			load_reference_set(_ref_sets_info.front());
+			_ref_sets_info.pop();
+			return true;
+		}
+		return false;
 	}
 
 	void Renderer::load_reference_set(const Ref_Set_Info& ref_set_info)
@@ -364,28 +395,40 @@ namespace DSS
 		Set dss_set;
 		dss_set.name = ref_set_info.name;
 
-		std::string items_arr_path = "/data/CuratedSet/items/";
-		const auto items_arr_ptr = rapidjson::GetValueByPointer(*_home_json_ptr, rapidjson::Pointer(items_arr_path.c_str()));
+		//TODO: Make this member check safe.
+		const auto data_obj_ptr = rapidjson::GetValueByPointer(*ref_set_json_ptr, rapidjson::Pointer("/data"));
+		
+		if (!data_obj_ptr)
+			return;
+
+		//Try to extract a set name. Assumes it's at this location.
+		//TODO: Make this safer.
+		std::string set_type = data_obj_ptr->MemberBegin()->name.GetString();
+		std::string items_arr_path = "/data/" + set_type + "/items";
+
+		const auto items_arr_ptr = rapidjson::GetValueByPointer(*ref_set_json_ptr, rapidjson::Pointer(items_arr_path.c_str()));
 		if (items_arr_ptr && !items_arr_ptr->IsNull())
 		{
+			
 			if (items_arr_ptr->IsArray())
 			{
 				const auto& items_arr = items_arr_ptr->GetArray();
 				for (size_t j = 0; j < items_arr.Size(); ++j)
 				{
-					std::string full_image_data_path = items_arr_path + std::to_string(j) +
+					std::string full_image_data_path = items_arr_path + "/"+ std::to_string(j) +
 						"/image/tile/1.78";//TODO: Determine what the integer member of the "tile" object represents.
 
-					auto image_data_ptr = rapidjson::GetValueByPointer(*_home_json_ptr, rapidjson::Pointer(full_image_data_path.c_str()));
+					auto image_data_ptr = rapidjson::GetValueByPointer(*ref_set_json_ptr, rapidjson::Pointer(full_image_data_path.c_str()));
 
 					if (image_data_ptr && !image_data_ptr->IsNull())
 					{
+						//TODO: Make this member check safe
 						std::string item_type = image_data_ptr->MemberBegin()->name.GetString();
+
 						full_image_data_path += ("/" + item_type + "/default");
-						image_data_ptr = rapidjson::GetValueByPointer(*_home_json_ptr, rapidjson::Pointer(full_image_data_path.c_str()));
+						image_data_ptr = rapidjson::GetValueByPointer(*ref_set_json_ptr, rapidjson::Pointer(full_image_data_path.c_str()));
 						if (image_data_ptr && !image_data_ptr->IsNull())
 						{
-							//TODO: Store image url, width, and height
 							if (image_data_ptr->IsObject())
 							{
 								//TODO: Determine what happens if these members don't exist
@@ -403,11 +446,28 @@ namespace DSS
 
 							}
 						}
+						else
+						{
+							return;
+						}
+					}
+					else
+					{
+						return;
 					}
 				}
 			}
-			_sets.push_back(std::move(dss_set));
+			else
+			{
+				return;
+			}
 		}
+		else
+		{
+			return;
+		}
+
+		_sets.push_back(std::move(dss_set));
 	}
 
 	void Renderer::draw_home_page()
@@ -665,11 +725,47 @@ namespace DSS
 		{
 			//std::cout << "Vertical Boundary Hit Detected!" << std::endl;
 			//shift tiles down
+			if (_row_indices[0] == SETS_UPPER_BOUNDARY_X)//DON'T UPDATE FRAME!!!
+				return;
+
+			for (int set_index = 0; set_index < MAX_SETS_RENDERED; ++set_index)
+			{
+				int new_index = _row_indices[set_index] - 1;
+				if (new_index < 0)//new index out of range of current row//DON'T ADD INVALID INDEX
+				{
+					return;
+				}
+				else
+				{
+					_row_indices[set_index] = new_index;
+				}
+			}
 		}
 		else if (pos.x == SETS_LOWER_BOUNDARY_X)
 		{
 			//std::cout << "Vertical Boundary Hit Detected!" << std::endl;
 			//shift tiles up
+
+			if (!consume_ref_set())
+				return;
+
+			auto current_row_count = _sets.size();//NOTE!! This collection's size will increase dynamically during runtime. Keep that in mind!!!
+
+			if (_row_indices[MAX_SETS_RENDERED - 1] == ((current_row_count) - 1))//DON'T UPDATE FRAME!!!
+				return;
+
+			for (int set_index = 0; set_index < MAX_SETS_RENDERED; ++set_index)
+			{
+				int new_index = _row_indices[set_index] + 1;
+				if (new_index >= current_row_count)//new index out of range of current row //DON'T ADD INVALID INDEX
+				{
+					return;
+				}
+				else
+				{
+					_row_indices[set_index] = new_index;
+				}
+			}
 		}
 	}
 }
