@@ -706,16 +706,18 @@ namespace DSS
 		{
 			//std::cout << "Horizontal Boundary Hit Detected!" << std::endl;
 
-			auto current_row_tile_count = _sets[(int)pos.x].tiles.size();
+			auto current_tile_count = _sets[(int)pos.x].tiles.size();
 
 			//shift tiles left
-			if (_tile_indices[(int)pos.x][MAX_COLUMNS_RENDERED - 1] == (current_row_tile_count))// - 1))//DON'T UPDATE FRAME!!!
+
+			//If last index in set of generated tile indices is equal to the number of tiles, do not update indices collection.
+			if (_tile_indices[(int)pos.x][MAX_COLUMNS_RENDERED - 1] == (current_tile_count))// - 1))//DON'T UPDATE FRAME!!!
 				return;
 
 			for (int column_index = 0; column_index < MAX_COLUMNS_RENDERED; ++column_index)
 			{
 				int tile_index = _tile_indices[(int)pos.x][column_index] + 1;
-				if (tile_index > current_row_tile_count)//new index out of range of current row //DON'T ADD INVALID INDEX
+				if (tile_index > current_tile_count)//new index out of range of current row //DON'T ADD INVALID INDEX
 				{
 					return;
 				}
@@ -732,6 +734,7 @@ namespace DSS
 		if (pos.x == ROWS_UPPER_BOUNDARY_X)
 		{
 			//std::cout << "Vertical Boundary Hit Detected!" << std::endl;
+
 			//shift tiles down
 			if (_set_indices[0] == ROWS_UPPER_BOUNDARY_X)//DON'T UPDATE FRAME!!!
 				return;
@@ -754,18 +757,21 @@ namespace DSS
 			//std::cout << "Vertical Boundary Hit Detected!" << std::endl;
 			//shift tiles up
 
-			if (!consume_ref_set())
-				return;
+			//if (!consume_ref_set())//TODO: BUG!!!! THIS SHOULD NOT RETURN IF NO REF SET TO CONSUME
+				//return;
 
-			auto current_row_count = _sets.size();//NOTE!! This collection's size will increase dynamically during runtime. Keep that in mind!!!
+			consume_ref_set();
 
-			if (_set_indices[MAX_ROWS_RENDERED - 1] == ((current_row_count) - 1))//DON'T UPDATE FRAME!!!
+			auto current_set_count = _sets.size();//NOTE!! This collection's size will increase dynamically during runtime. Keep that in mind!!!
+
+			//If last index in set of generated set indices is equal to last index available for sets, do not update indices collection.
+			if (_set_indices[MAX_ROWS_RENDERED - 1] == ((current_set_count) - 1))//DON'T UPDATE FRAME!!!
 				return;
 
 			for (int row_index = 0; row_index < MAX_ROWS_RENDERED; ++row_index)
 			{
 				int set_index = _set_indices[row_index] + 1;
-				if (set_index >= current_row_count)//new index out of range of current row //DON'T ADD INVALID INDEX
+				if (set_index >= current_set_count)//new index out of range of current row //DON'T ADD INVALID INDEX
 				{
 					return;
 				}
