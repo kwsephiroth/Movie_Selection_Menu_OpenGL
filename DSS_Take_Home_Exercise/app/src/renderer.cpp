@@ -689,16 +689,16 @@ namespace DSS
 			if (_tile_indices[(int)pos.x][0] == COLUMNS_LEFT_BOUNDARY_Y)//DON'T UPDATE FRAME!!!
 				return;
 
-			for (int tile_index = 0; tile_index < MAX_COLUMNS_RENDERED; ++tile_index)
+			for (int column_index = 0; column_index < MAX_COLUMNS_RENDERED; ++column_index)
 			{
-				int new_index = _tile_indices[(int)pos.x][tile_index] - 1;
-				if (new_index < 0)//new index out of range of current row//DON'T ADD INVALID INDEX
+				int tile_index = _tile_indices[(int)pos.x][column_index] - 1;
+				if (tile_index < 0)//new index out of range of current row//DON'T ADD INVALID INDEX
 				{
 					return;
 				}
 				else
 				{
-					_tile_indices[(int)pos.x][tile_index] = new_index;
+					_tile_indices[(int)pos.x][column_index] = tile_index;
 				}
 			}
 		}
@@ -712,16 +712,16 @@ namespace DSS
 			if (_tile_indices[(int)pos.x][MAX_COLUMNS_RENDERED - 1] == (current_row_tile_count))// - 1))//DON'T UPDATE FRAME!!!
 				return;
 
-			for (int tile_index = 0; tile_index < MAX_COLUMNS_RENDERED; ++tile_index)
+			for (int column_index = 0; column_index < MAX_COLUMNS_RENDERED; ++column_index)
 			{
-				int new_index = _tile_indices[(int)pos.x][tile_index] + 1;
-				if (new_index > current_row_tile_count)//new index out of range of current row //DON'T ADD INVALID INDEX
+				int tile_index = _tile_indices[(int)pos.x][column_index] + 1;
+				if (tile_index > current_row_tile_count)//new index out of range of current row //DON'T ADD INVALID INDEX
 				{
 					return;
 				}
 				else
 				{
-				  _tile_indices[(int)pos.x][tile_index] = new_index;
+				  _tile_indices[(int)pos.x][column_index] = tile_index;
 				}
 			}
 		}
@@ -736,16 +736,16 @@ namespace DSS
 			if (_set_indices[0] == ROWS_UPPER_BOUNDARY_X)//DON'T UPDATE FRAME!!!
 				return;
 
-			for (int set_index = 0; set_index < MAX_ROWS_RENDERED; ++set_index)
+			for (int row_index = 0; row_index < MAX_ROWS_RENDERED; ++row_index)
 			{
-				int new_index = _set_indices[set_index] - 1;
-				if (new_index < 0)//new index out of range of current row//DON'T ADD INVALID INDEX
+				int set_index = _set_indices[row_index] - 1;
+				if (set_index < 0)//new index out of range of current row//DON'T ADD INVALID INDEX
 				{
 					return;
 				}
 				else
 				{
-					_set_indices[set_index] = new_index;
+					_set_indices[row_index] = set_index;
 				}
 			}
 		}
@@ -762,16 +762,16 @@ namespace DSS
 			if (_set_indices[MAX_ROWS_RENDERED - 1] == ((current_row_count) - 1))//DON'T UPDATE FRAME!!!
 				return;
 
-			for (int set_index = 0; set_index < MAX_ROWS_RENDERED; ++set_index)
+			for (int row_index = 0; row_index < MAX_ROWS_RENDERED; ++row_index)
 			{
-				int new_index = _set_indices[set_index] + 1;
-				if (new_index >= current_row_count)//new index out of range of current row //DON'T ADD INVALID INDEX
+				int set_index = _set_indices[row_index] + 1;
+				if (set_index >= current_row_count)//new index out of range of current row //DON'T ADD INVALID INDEX
 				{
 					return;
 				}
 				else
 				{
-					_set_indices[set_index] = new_index;
+					_set_indices[row_index] = set_index;
 				}
 			}
 		}
