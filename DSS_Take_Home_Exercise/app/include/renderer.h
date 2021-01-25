@@ -72,8 +72,8 @@ namespace DSS
 		glm::mat4 _transform;
 		glm::vec2 _focused_tile_position = INIT_FOCUSED_TILE_POSITION;
 		glm::vec2 _boundary_pos = { 0, 0 };
-		int _row_to_tiles_frame[MAX_SETS_RENDERED][MAX_TILES_RENDERED];
-		int _row_indices[MAX_SETS_RENDERED];
+		int _tile_indices[MAX_ROWS_RENDERED][MAX_COLUMNS_RENDERED];
+		int _set_indices[MAX_ROWS_RENDERED];
 		bool _shift_tiles_horizontal = false;
 		bool _shift_tiles_vertical = false;
 		int _shift_y_offset = 0;
