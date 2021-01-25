@@ -482,7 +482,7 @@ namespace DSS
 	void Renderer::draw_home_page()
 	{
 
-		//RENDER TEXT FIRST
+		//RENDER TEXT FIRST//TODO: Move to proper location in algorithm
 		float title_y_shift = 0;
 		float init_y = 1045.0f;
 		for (const auto& set : _sets)
@@ -502,16 +502,10 @@ namespace DSS
 		//DRAW TILE GRID
 		float spacing_update_x = 0;
 		float spacing_update_y = 0;
-		size_t rendered_tile_count = 0;
-		size_t rendered_row_count = 0;
-		size_t row_index = 0;
-		size_t row_pos = 0;
 
 		//while (rendered_row_count < MAX_SETS_RENDERED && row_index < _sets.size())//LOOP OVER MAX ROW COUNT
 		for(int row_index = 0; row_index < MAX_ROWS_RENDERED; ++row_index)//LOOP OVER MAX ROW COUNT
 		{
-			row_pos = row_index;
-
 			//Check tile frame for any invalid indices
 			bool invalid_tile_index_detected = false;
 			for (int column_index = 0; column_index < MAX_COLUMNS_RENDERED; ++column_index)
@@ -590,8 +584,6 @@ namespace DSS
 
 			spacing_update_x = 0;
 			spacing_update_y -= 0.5f;
-			//++rendered_row_count;
-			//++row_index;
 		}
 		//END DRAW TILE GRID
 
