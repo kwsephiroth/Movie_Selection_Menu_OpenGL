@@ -76,19 +76,19 @@ static void process_controller_input(DSS::Renderer& renderer)
 {
     using namespace DSS;
 
-    if (keys[GLFW_KEY_W])
+    if (keys[GLFW_KEY_UP])
     {
         renderer.process_controller_input(ControllerInput::UP);
     }
-    if (keys[GLFW_KEY_S])
+    if (keys[GLFW_KEY_DOWN])
     {
         renderer.process_controller_input(ControllerInput::DOWN);
     }
-    if (keys[GLFW_KEY_A])
+    if (keys[GLFW_KEY_LEFT])
     {
         renderer.process_controller_input(ControllerInput::LEFT);
     }
-    if (keys[GLFW_KEY_D])
+    if (keys[GLFW_KEY_RIGHT])
     {
         renderer.process_controller_input(ControllerInput::RIGHT);
     }
