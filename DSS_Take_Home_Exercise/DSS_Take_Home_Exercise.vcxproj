@@ -74,21 +74,25 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)bin\intermediates\$(Platform)\$(Configuration)\</IntDir>
+    <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)bin\intermediates\$(Platform)\$(Configuration)\</IntDir>
+    <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)bin\intermediates\$(Platform)\$(Configuration)\</IntDir>
+    <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)bin\intermediates\$(Platform)\$(Configuration)\</IntDir>
+    <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -106,6 +110,9 @@
       <AdditionalLibraryDirectories>$(SolutionDir)third_party\GLFW\lib\Win32;$(SolutionDir)third_party\GLEW\lib\Release\Win32;$(SolutionDir)third_party\curl\lib\Win32;$(SolutionDir)third_party\SOIL2\lib\Win32;$(SolutionDir)third_party\freetype\lib\Win32</AdditionalLibraryDirectories>
       <AdditionalDependencies>libcurl_a.lib;Ws2_32.lib;Wldap32.lib;Crypt32.lib;Normaliz.lib;glew32s.lib;glfw3.lib;opengl32.lib;User32.lib;Gdi32.lib;Shell32.lib;Advapi32.lib;soil2.lib;soil2-debug.lib;freetype.lib</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /y "$(ProjectDir)app\res\fonts\FreeSans.ttf"  "$(OutDir)"app\res\fonts\</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -125,6 +132,9 @@
       <AdditionalLibraryDirectories>$(SolutionDir)third_party\GLFW\lib\Win32;$(SolutionDir)third_party\GLEW\lib\Release\Win32;$(SolutionDir)third_party\curl\lib\Win32;$(SolutionDir)third_party\SOIL2\lib\Win32;$(SolutionDir)third_party\freetype\lib\Win32</AdditionalLibraryDirectories>
       <AdditionalDependencies>libcurl_a.lib;Ws2_32.lib;Wldap32.lib;Crypt32.lib;Normaliz.lib;glew32s.lib;glfw3.lib;opengl32.lib;User32.lib;Gdi32.lib;Shell32.lib;Advapi32.lib;soil2.lib;soil2-debug.lib;freetype.lib</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /y "$(ProjectDir)app\res\fonts\FreeSans.ttf"  "$(OutDir)"app\res\fonts\</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -142,6 +152,9 @@
       </AdditionalLibraryDirectories>
       <AdditionalDependencies>libcurl_a.lib;Ws2_32.lib;Wldap32.lib;Crypt32.lib;Normaliz.lib;glew32s.lib;glfw3.lib;opengl32.lib;User32.lib;Gdi32.lib;Shell32.lib;Advapi32.lib;soil2.lib;soil2-debug.lib;freetype.lib</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /y "$(ProjectDir)app\res\fonts\FreeSans.ttf"  "$(OutDir)"app\res\fonts\</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -162,6 +175,9 @@
       </AdditionalLibraryDirectories>
       <AdditionalDependencies>libcurl_a.lib;Ws2_32.lib;Wldap32.lib;Crypt32.lib;Normaliz.lib;glew32s.lib;glfw3.lib;opengl32.lib;User32.lib;Gdi32.lib;Shell32.lib;Advapi32.lib;soil2.lib;soil2-debug.lib;freetype.lib</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /y "$(ProjectDir)app\res\fonts\FreeSans.ttf"  "$(OutDir)"app\res\fonts\</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="app\include\curl_utils.h" />
@@ -170,10 +186,8 @@
     <ClCompile Include="app\src\texture.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="app\include\common_includes.h" />
     <ClInclude Include="app\include\constants.h" />
     <ClInclude Include="app\include\renderer.h" />
-    <ClInclude Include="app\include\text.h" />
     <ClInclude Include="app\include\texture.h" />
     <ClInclude Include="app\include\utils.h" />
     <ClInclude Include="app\include\shader.h" />

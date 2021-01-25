@@ -11,8 +11,6 @@ namespace DSS
 			load_texture();
 			_initialized = true;
 		}
-
-		//TODO: What to do if image data is null?
 	}
 
 	Texture::~Texture()

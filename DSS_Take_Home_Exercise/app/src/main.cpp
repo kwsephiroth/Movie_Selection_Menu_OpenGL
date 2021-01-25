@@ -1,7 +1,6 @@
 #include <iostream>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <SOIL2/SOIL2.h>
 #include <glm\glm.hpp>
 #include <glm\gtc\matrix_transform.hpp>
 #include "renderer.h"
@@ -127,9 +126,6 @@ int main(void)
         /* Problem: glewInit failed, something is seriously wrong. */
         fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
     }
-    //fprintf(stdout, "Status: Using GLEW %s\n", glewGetString(GLEW_VERSION));
-
-   // std::cout << glGetString(GL_VERSION) << std::endl;
 
     //Set up callback functions to capture and respond to events
     glfwSetKeyCallback(window, key_callback);
@@ -139,6 +135,8 @@ int main(void)
 
     DSS::Renderer renderer(rendering_program, position_attrib_location, texture_attrib_location);
 
+    std::cout << "Rendering home page ... " << std::endl;
+
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
@@ -146,7 +144,6 @@ int main(void)
         glfwPollEvents(); //Any pressed keys will be recorded
 
         //Process any controller inputs
-        //TODO: Avoid doing this every frame somehow;
         if (new_key_pressed.load())
         {
             process_controller_input(renderer);
@@ -160,12 +157,6 @@ int main(void)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         renderer.draw_home_page();
-
-        while (GLenum error = glGetError())
-        {
-            std::cout << "[OpenGL Error] (" << error << ") " << std::endl;
-        }
-
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);

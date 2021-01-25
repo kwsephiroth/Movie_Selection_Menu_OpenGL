@@ -23,6 +23,10 @@ namespace DSS
 
 	Renderer::~Renderer()
 	{
+		glDeleteVertexArrays(1, &_vao);
+		glDeleteBuffers(1, &_tile_pos_vbo);
+		glDeleteBuffers(1, &_tile_tex_vbo);
+		glDeleteBuffers(1, &_text_vbo);
 	}
 
 	void Renderer::init()
@@ -36,7 +40,6 @@ namespace DSS
 			glGenVertexArrays(1, &_vao);
 
 			//Load objects needed for rendering text.
-			//TODO: Implement text rendering.
 			assert(init_text_dependencies());
 
 			glBindVertexArray(_vao);
@@ -69,7 +72,6 @@ namespace DSS
 			glBindVertexArray(0);
 		}
 		std::cout << "Home page initialized!" << std::endl;
-		std::cout << "Rendering home page ... " << std::endl;
 	}
 
 	bool Renderer::init_text_dependencies()
@@ -82,7 +84,7 @@ namespace DSS
 		}
 
 		FT_Face face;
-		if (FT_New_Face(ft, "./app/res/fonts/FreeSans.ttf", 0, &face)) //TODO: copy the file to executable directory
+		if (FT_New_Face(ft, "app/res/fonts/FreeSans.ttf", 0, &face)) //TODO: copy the file to executable directory
 		{
 			fprintf(stderr, "Could not open font\n");
 			return false;
@@ -141,7 +143,6 @@ namespace DSS
 
 		// configure VAO/VBO for texture quads
 		// -----------------------------------
-		//glGenVertexArrays(1, &VAO);
 		glGenBuffers(1, &_text_vbo);
 		glBindVertexArray(_vao);
 		glBindBuffer(GL_ARRAY_BUFFER, _text_vbo);
@@ -156,6 +157,7 @@ namespace DSS
 		return true;
 	}
 
+	//Function source: https://learnopengl.com/In-Practice/Text-Rendering
 	void Renderer::render_text(std::string text, float x, float y, float scale, glm::vec3 color)
 	{
 		// activate corresponding render state	
@@ -211,7 +213,7 @@ namespace DSS
 		{
 			auto file_memory_ptr = curl_utils::download_file_to_memory(HOME_JSON_URL);
 			_home_json_ptr = Utils::get_rj_document(file_memory_ptr->memory);
-			assert(_home_json_ptr);//TODO: Remove this assert for a better option
+			assert(_home_json_ptr);
 		}
 
 		const auto containers_arr_ptr = rapidjson::GetValueByPointer(*_home_json_ptr, rapidjson::Pointer("/data/StandardCollection/containers"));
@@ -230,15 +232,12 @@ namespace DSS
 					Set dss_set;
 					dss_set.name = set_name_ptr->GetString();
 
-					//std::cout << "set name = " << set_name_ptr->GetString() << std::endl;
-
 					std::string items_arr_path = "/data/StandardCollection/containers/" + std::to_string(i) + "/set/items";
 					const auto items_arr_ptr = rapidjson::GetValueByPointer(*_home_json_ptr, rapidjson::Pointer(items_arr_path.c_str()));
 					if (items_arr_ptr && !items_arr_ptr->IsNull())
 					{
 						if (items_arr_ptr->IsArray())
 						{
-							/*total_items += items_arr_ptr->GetArray().Size();*/
 							const auto& items_arr = items_arr_ptr->GetArray();
 							for (size_t j = 0; j < items_arr.Size(); ++j)
 							{
@@ -258,7 +257,6 @@ namespace DSS
 									{
 										if (image_data_ptr->IsObject())
 										{
-											//TODO: Determine what happens if these members don't exist
 											const auto image_url_ptr = image_data_ptr->FindMember("url");
 											const auto image_width_ptr = image_data_ptr->FindMember("masterWidth");
 											const auto image_height_ptr = image_data_ptr->FindMember("masterHeight");
@@ -478,7 +476,6 @@ namespace DSS
 
 	void Renderer::draw_home_page()
 	{
-		//RENDER TEXT FIRST//TODO: Move to proper location in algorithm
 		float text_height_offset = 0;
 		static const float INIT_TEXT_HEIGHT = 1045.0f;
 		static const float SCALE_FACTOR = 0.3f;
@@ -554,7 +551,7 @@ namespace DSS
 					{
 						continue;
 					}
-					std::cout << "downloaded additional texture @ " << current_tile.image_url.c_str() << std::endl;
+					//std::cout << "downloaded additional texture @ " << current_tile.image_url.c_str() << std::endl;
 				}
 
 				current_tile.texture->bind(0);
@@ -581,7 +578,6 @@ namespace DSS
 			{
 				if (_focused_tile_position.x == ROWS_UPPER_BOUNDARY_X)
 				{
-					//std::cout << "Can't move UP any further." << std::endl;
 					check_for_vertical_boundary_hit(_focused_tile_position);
 				}
 				else
@@ -595,7 +591,6 @@ namespace DSS
 			{
 				if (_focused_tile_position.x == ROWS_LOWER_BOUNDARY_X)
 				{
-					//std::cout << "Can't move DOWN any further." << std::endl;
 					check_for_vertical_boundary_hit(_focused_tile_position);
 				}
 				else
@@ -609,7 +604,6 @@ namespace DSS
 			{
 				if (_focused_tile_position.y == COLUMNS_LEFT_BOUNDARY_Y)
 				{
-					//std::cout << "Can't move LEFT any further." << std::endl;
 					check_for_horizontal_boundary_hit(_focused_tile_position);
 				}
 				else
@@ -623,7 +617,6 @@ namespace DSS
 			{
 				if (_focused_tile_position.y == COLUMNS_RIGHT_BOUNDARY_Y)
 				{
-					//std::cout << "Can't move RIGHT any further." << std::endl;
 					check_for_horizontal_boundary_hit(_focused_tile_position);
 				}
 				else
@@ -651,8 +644,6 @@ namespace DSS
 				return;
 			}
 		}
-
-		//std::cout << "focused_tile_position (" << _focused_tile_position.x << " , " << _focused_tile_position.y << " ) " << std::endl;
 	}
 
 	void Renderer::check_for_horizontal_boundary_hit(const glm::vec2& pos)
@@ -685,9 +676,6 @@ namespace DSS
 	{
 		if (pos.x == ROWS_UPPER_BOUNDARY_X)
 		{
-			//std::cout << "Vertical Boundary Hit Detected!" << std::endl;
-
-			//shift tiles down
 			if (_set_indices[0] == ROWS_UPPER_BOUNDARY_X)//DON'T UPDATE FRAME!!!
 				return;
 
@@ -716,7 +704,7 @@ namespace DSS
 
 			for (int row_index = 0; row_index < MAX_ROWS_RENDERED; ++row_index)
 			{
-				int new_set_index = _set_indices[row_index] + 1;
+				unsigned int new_set_index = _set_indices[row_index] + 1;
 				if (new_set_index >= current_set_count)//new index out of range of current row //DON'T ADD INVALID INDEX
 				{
 					return;
