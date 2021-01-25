@@ -12,20 +12,13 @@ namespace DSS
 	{
 		init();
 
-		//Initialize row frame array
-		for (int i = 0; i < MAX_ROWS_RENDERED; ++i)
-		{
+		for (int i = 0; i < MAX_ROWS_RENDERED; ++i)//Initialize map keps
 			_set_indices[i] = i;
-		}
 
-		//Initialize tiles frame array
-		for (int i = 0; i < MAX_ROWS_RENDERED; ++i)//TODO: Make row count a constant
-		{
-			for (int j = 0; j < MAX_COLUMNS_RENDERED; ++j)//TODO: Make column count a constant
-			{
-				_tile_indices[i][j] = j;
-			}
-		}
+		_set_to_indices_map[0] = { 0, 1, 2, 3, 4, 5 };
+		_set_to_indices_map[1] = { 0, 1, 2, 3, 4, 5 };
+		_set_to_indices_map[2] = { 0, 1, 2, 3, 4, 5 };
+		_set_to_indices_map[3] = { 0, 1, 2, 3, 4, 5 };
 	}
 
 	Renderer::~Renderer()
@@ -317,9 +310,12 @@ namespace DSS
 
 	void Renderer::load_textures()
 	{
+		
+
 		for (auto& set : _sets)
 		{	
-			//for (auto& tile : set.tiles)
+			//TODO: Record total image count before any potential tiles removals.
+			set.total_image_count = set.tiles.size();
 			for (auto itr = set.tiles.begin(); itr != (set.tiles.begin() + MAX_COLUMNS_RENDERED);)
 			{
 				auto texture_ptr = download_texture(itr->image_url.c_str());
@@ -475,64 +471,50 @@ namespace DSS
 		{
 			return;
 		}
-
 		_sets.push_back(std::move(dss_set));
+		_set_to_indices_map[_sets.size() - 1] = { 0,1,2,3,4,5 };//New key added to map
+
 	}
 
 	void Renderer::draw_home_page()
 	{
-
 		//RENDER TEXT FIRST//TODO: Move to proper location in algorithm
-		float title_y_shift = 0;
-		float init_y = 1045.0f;
-		for (const auto& set : _sets)
-		{
-			render_text(set.name, 45, init_y - title_y_shift, 0.4f, glm::vec3(1.0, 1.0f, 1.0f));
-			title_y_shift += 270;
-		}
-
-		glUseProgram(_shader_program_id);
-
+		float text_height_offset = 0;
+		static const float INIT_TEXT_HEIGHT = 1045.0f;
 		static const float SCALE_FACTOR = 0.3f;
 		static const float POS_OFFSET_X = -.8f;
 		static const float POS_OFFSET_Y = .7f;
 		static const float FOCUSED_SCALE_FACTOR = 0.39f;
 
-		glBindVertexArray(_vao);
+		
 		//DRAW TILE GRID
 		float spacing_update_x = 0;
 		float spacing_update_y = 0;
 
-		//while (rendered_row_count < MAX_SETS_RENDERED && row_index < _sets.size())//LOOP OVER MAX ROW COUNT
 		for(int row_index = 0; row_index < MAX_ROWS_RENDERED; ++row_index)//LOOP OVER MAX ROW COUNT
 		{
-			//Check tile frame for any invalid indices
-			bool invalid_tile_index_detected = false;
-			for (int column_index = 0; column_index < MAX_COLUMNS_RENDERED; ++column_index)
-			{
-				int tile_index = _tile_indices[row_index][column_index];
-				if (tile_index < 0 || tile_index > _sets[row_index].tiles.size())//INVALID FRAME DETECTED
-				{
-					invalid_tile_index_detected = true;
-					break;
-				}
-			}
-
-			if (invalid_tile_index_detected)
-				continue;//Skip rendering for this row
-
-
+			int set_index = _set_indices[row_index];//Maps to visible row index
+			
+			//Render Set Title First
+			render_text(_sets[set_index].name, 45, INIT_TEXT_HEIGHT - text_height_offset, 0.4f, glm::vec3(1.0, 1.0f, 1.0f));
+			text_height_offset += 270;
+			
+			glUseProgram(_shader_program_id);
+			glBindVertexArray(_vao);
+			
 			for (int column_index = 0; column_index < MAX_COLUMNS_RENDERED; ++column_index)//LOOP OVER MAX COLUMN COUNT
 			{
-				if (column_index >= _sets[row_index].tiles.size())
-					break;
+				//if (column_index >= _sets[row_index].tiles.size())
+					//break;
 
-				int tile_index = _tile_indices[row_index][column_index];
+				int tile_index = _set_to_indices_map[set_index][column_index];
 
-				if (tile_index == _sets[row_index].tiles.size())//Don't try to render past max tile count
+				if (tile_index == _sets[set_index].tiles.size())//Don't try to render past max tile count
+				{
 					continue;
+				}
 
-				auto& current_tile = _sets[row_index].tiles[tile_index];
+				auto& current_tile = _sets[set_index].tiles[tile_index];
 				current_tile.position = { row_index, column_index };
 
 				//Apply any transformations to tiles
@@ -541,6 +523,7 @@ namespace DSS
 
 				if (current_tile.position == _focused_tile_position)//Apply additional scaling to focused tile
 				{
+					_currently_selected_set = set_index;
 					current_tile.is_focused = true;
 					transform = glm::scale(transform, glm::vec3(FOCUSED_SCALE_FACTOR, FOCUSED_SCALE_FACTOR, 0.0f));
 				}
@@ -676,47 +659,24 @@ namespace DSS
 	{
 		if (pos.y == COLUMNS_LEFT_BOUNDARY_Y)
 		{
-			//std::cout << "Horizontal Boundary Hit Detected!" << std::endl;
-			//shift tiles right
-			if (_tile_indices[(int)pos.x][0] == COLUMNS_LEFT_BOUNDARY_Y)//DON'T UPDATE FRAME!!!
+			if (_set_to_indices_map[_currently_selected_set].front() == COLUMNS_LEFT_BOUNDARY_Y)
 				return;
 
-			for (int column_index = 0; column_index < MAX_COLUMNS_RENDERED; ++column_index)
+			for (auto& tile_index : _set_to_indices_map[_currently_selected_set])
 			{
-				int tile_index = _tile_indices[(int)pos.x][column_index] - 1;
-				if (tile_index < 0)//new index out of range of current row//DON'T ADD INVALID INDEX
-				{
-					return;
-				}
-				else
-				{
-					_tile_indices[(int)pos.x][column_index] = tile_index;
-				}
+				--tile_index;
 			}
 		}
 		else if (pos.y == COLUMNS_RIGHT_BOUNDARY_Y)
 		{
-			//std::cout << "Horizontal Boundary Hit Detected!" << std::endl;
+			int current_tile_count = _sets[_currently_selected_set].tiles.size();
 
-			auto current_tile_count = _sets[(int)pos.x].tiles.size();
-
-			//shift tiles left
-
-			//If last index in set of generated tile indices is equal to the number of tiles, do not update indices collection.
-			if (_tile_indices[(int)pos.x][MAX_COLUMNS_RENDERED - 1] == (current_tile_count))// - 1))//DON'T UPDATE FRAME!!!
+			if (_set_to_indices_map[_currently_selected_set].back() == current_tile_count)
 				return;
 
-			for (int column_index = 0; column_index < MAX_COLUMNS_RENDERED; ++column_index)
+			for (auto& tile_index : _set_to_indices_map[_currently_selected_set])
 			{
-				int tile_index = _tile_indices[(int)pos.x][column_index] + 1;
-				if (tile_index > current_tile_count)//new index out of range of current row //DON'T ADD INVALID INDEX
-				{
-					return;
-				}
-				else
-				{
-				  _tile_indices[(int)pos.x][column_index] = tile_index;
-				}
+				++tile_index;
 			}
 		}
 	}
@@ -733,27 +693,21 @@ namespace DSS
 
 			for (int row_index = 0; row_index < MAX_ROWS_RENDERED; ++row_index)
 			{
-				int set_index = _set_indices[row_index] - 1;
-				if (set_index < 0)//new index out of range of current row//DON'T ADD INVALID INDEX
+				int new_set_index = _set_indices[row_index] - 1;
+				if (new_set_index < 0)//new index out of range of current row//DON'T ADD INVALID INDEX
 				{
 					return;
 				}
 				else
 				{
-					_set_indices[row_index] = set_index;
+					_set_indices[row_index] = new_set_index;
 				}
 			}
 		}
 		else if (pos.x == ROWS_LOWER_BOUNDARY_X)
 		{
-			//std::cout << "Vertical Boundary Hit Detected!" << std::endl;
-			//shift tiles up
-
-			//if (!consume_ref_set())//TODO: BUG!!!! THIS SHOULD NOT RETURN IF NO REF SET TO CONSUME
-				//return;
-
 			consume_ref_set();
-
+			
 			auto current_set_count = _sets.size();//NOTE!! This collection's size will increase dynamically during runtime. Keep that in mind!!!
 
 			//If last index in set of generated set indices is equal to last index available for sets, do not update indices collection.
@@ -762,14 +716,15 @@ namespace DSS
 
 			for (int row_index = 0; row_index < MAX_ROWS_RENDERED; ++row_index)
 			{
-				int set_index = _set_indices[row_index] + 1;
-				if (set_index >= current_set_count)//new index out of range of current row //DON'T ADD INVALID INDEX
+				int new_set_index = _set_indices[row_index] + 1;
+				if (new_set_index >= current_set_count)//new index out of range of current row //DON'T ADD INVALID INDEX
 				{
 					return;
 				}
 				else
 				{
-					_set_indices[row_index] = set_index;
+					_set_indices[row_index] = new_set_index;
+					
 				}
 			}
 		}

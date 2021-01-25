@@ -37,6 +37,7 @@ namespace DSS
 	struct Set
 	{
 		std::string name;
+		int total_image_count = 0;
 		std::vector<Tile> tiles;
 	};
 
@@ -74,12 +75,15 @@ namespace DSS
 		glm::vec2 _boundary_pos = { 0, 0 };
 		int _tile_indices[MAX_ROWS_RENDERED][MAX_COLUMNS_RENDERED];
 		int _set_indices[MAX_ROWS_RENDERED];
+		int _currently_selected_set = 0;
 		bool _shift_tiles_horizontal = false;
 		bool _shift_tiles_vertical = false;
 		int _shift_y_offset = 0;
 		int _shift_x_offset = 0;
+		bool _should_consume_ref_set;
 		std::map<GLchar, Character> _characters;
 		std::queue<Ref_Set_Info> _ref_sets_info;
+		std::map<unsigned int, std::vector<unsigned int>> _set_to_indices_map;
 
 		void init();
 		void load_textures();
