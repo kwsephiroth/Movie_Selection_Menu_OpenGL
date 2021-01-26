@@ -88,6 +88,7 @@ namespace DSS
 		std::map<unsigned int, std::vector<unsigned int>> _set_to_indices_map;
 
 		void init();
+		
 		void load_textures();
 		void load_homepage_api_json();
 		bool init_text_dependencies();

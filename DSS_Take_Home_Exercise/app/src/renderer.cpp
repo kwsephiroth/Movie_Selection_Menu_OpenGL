@@ -308,8 +308,6 @@ namespace DSS
 
 	void Renderer::load_textures()
 	{
-		
-
 		for (auto& set : _sets)
 		{	
 			//TODO: Record total image count before any potential tiles removals.
@@ -501,8 +499,8 @@ namespace DSS
 			
 			for (int column_index = 0; column_index < MAX_COLUMNS_RENDERED; ++column_index)//LOOP OVER MAX COLUMN COUNT
 			{
-				//if (column_index >= _sets[row_index].tiles.size())
-					//break;
+				if (column_index >= _sets[row_index].tiles.size())
+					break;
 
 				int tile_index = _set_to_indices_map[set_index][column_index];
 
@@ -549,6 +547,9 @@ namespace DSS
 					current_tile.texture = download_texture(current_tile.image_url.c_str());
 					if (!current_tile.texture)
 					{
+						//Remove any bad tiles from current set's tile collection
+						auto itr = _sets[set_index].tiles.begin() + (tile_index);
+						_sets[set_index].tiles.erase(itr);
 						continue;
 					}
 					//std::cout << "downloaded additional texture @ " << current_tile.image_url.c_str() << std::endl;
