@@ -85,11 +85,13 @@ namespace DSS
 		int _shift_x_offset = 0;
 		std::map<GLchar, Character> _characters;
 		std::queue<Ref_Set_Info> _ref_sets_info;
-		std::map<unsigned int, std::vector<unsigned int>> _set_to_indices_map;
+		std::map<unsigned int, std::vector<unsigned int>> _set_to_tile_indices_map;
 
 		void init();
 		
-		void load_textures();
+		void load_textures_for_all_sets();
+		void load_textures_for_set_at(const int set_index);
+		void load_textures_for_set(Set&);
 		void load_homepage_api_json();
 		bool init_text_dependencies();
 		std::unique_ptr<Texture> download_texture(const char*);

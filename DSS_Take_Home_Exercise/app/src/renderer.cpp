@@ -12,13 +12,11 @@ namespace DSS
 	{
 		init();
 
-		for (int i = 0; i < MAX_ROWS_RENDERED; ++i)//Initialize map keps
+		for (int i = 0; i < MAX_ROWS_RENDERED; ++i)//Initialize map keys and map
+		{
 			_set_indices[i] = i;
-
-		_set_to_indices_map[0] = { 0, 1, 2, 3, 4, 5 };
-		_set_to_indices_map[1] = { 0, 1, 2, 3, 4, 5 };
-		_set_to_indices_map[2] = { 0, 1, 2, 3, 4, 5 };
-		_set_to_indices_map[3] = { 0, 1, 2, 3, 4, 5 };
+			_set_to_tile_indices_map[i] = { 0, 1, 2, 3, 4, 5 };
+		}
 	}
 
 	Renderer::~Renderer()
@@ -43,7 +41,7 @@ namespace DSS
 			assert(init_text_dependencies());
 
 			glBindVertexArray(_vao);
-			load_textures();
+			load_textures_for_all_sets();
 			//init_meshes();
 			
 			float tile_positions[12] = {
@@ -304,26 +302,62 @@ namespace DSS
 				}//sets
 			}
 		}
+
+		//If initial set count is less than MAX_ROWS_RENDERED, consume ref set(s) until equal
+		while(_sets.size() < MAX_ROWS_RENDERED)
+		{
+			if (!consume_ref_set())
+				break;
+
+			//Download textures for newly appended ref set.
+			load_textures_for_set(_sets.back());
+		}
+
+		if (_sets.size() < MAX_ROWS_RENDERED)
+		{
+			std::cerr << "Unable to render at minimum " << MAX_ROWS_RENDERED << " rows for homepage. Please check json data." << std::endl;
+			assert(false);
+		}
+		//else
+		//{
+			//Download textures for newly appended ref set.
+			//load_textures_for_set_at()
+		//}
 	}
 
-	void Renderer::load_textures()
+	void Renderer::load_textures_for_all_sets()
 	{
 		for (auto& set : _sets)
 		{	
-			//TODO: Record total image count before any potential tiles removals.
-			set.total_image_count = set.tiles.size();
-			for (auto itr = set.tiles.begin(); itr != (set.tiles.begin() + MAX_COLUMNS_RENDERED);)
+			load_textures_for_set(set);
+		}
+	}
+
+	void Renderer::load_textures_for_set_at(const int set_index)
+	{
+		if (set_index < 0 || set_index >= _sets.size())
+			return;
+		
+		//auto& set = _sets[set_index];
+		//set.total_image_count = set.tiles.size();
+		load_textures_for_set(_sets[set_index]);
+	}
+
+	void Renderer::load_textures_for_set(Set& set)
+	{
+		//Record total image count before any potential tiles removals.
+		set.total_image_count = set.tiles.size();
+		for (auto itr = set.tiles.begin(); itr != (set.tiles.begin() + MAX_COLUMNS_RENDERED);)
+		{
+			auto texture_ptr = download_texture(itr->image_url.c_str());
+			if (!texture_ptr)//Skip any textures that couldn't be successfully downloaded.
 			{
-				auto texture_ptr = download_texture(itr->image_url.c_str());
-				if (!texture_ptr)//Skip any textures that couldn't be successfully downloaded.
-				{
-					itr = set.tiles.erase(itr);
-				}
-				else
-				{
-					itr->texture = std::move(texture_ptr);
-					++itr;
-				}
+				itr = set.tiles.erase(itr);
+			}
+			else
+			{
+				itr->texture = std::move(texture_ptr);
+				++itr;
 			}
 		}
 	}
@@ -430,17 +464,6 @@ namespace DSS
 								if (!image_url_ptr->value.IsString() || !image_width_ptr->value.IsInt() || !image_height_ptr->value.IsInt())
 									continue;
 
-								////TODO: Download texture for tile right away?
-								//auto texture_ptr = download_texture(image_url_ptr->value.GetString());
-								//
-								//if (!texture_ptr)
-								//	continue;
-
-								//dss_set.tiles.push_back({ image_url_ptr->value.GetString(),
-								//	image_width_ptr->value.GetInt(),
-								//	image_height_ptr->value.GetInt(),
-								//	std::move(texture_ptr) });
-
 								dss_set.tiles.push_back({ image_url_ptr->value.GetString(),
 								image_width_ptr->value.GetInt(),
 								image_height_ptr->value.GetInt(),
@@ -468,7 +491,7 @@ namespace DSS
 			return;
 		}
 		_sets.push_back(std::move(dss_set));
-		_set_to_indices_map[_sets.size() - 1] = { 0,1,2,3,4,5 };//New key added to map
+		_set_to_tile_indices_map[_sets.size() - 1] = { 0,1,2,3,4,5 };//New key added to map
 
 	}
 
@@ -488,7 +511,15 @@ namespace DSS
 
 		for(int row_index = 0; row_index < MAX_ROWS_RENDERED; ++row_index)//LOOP OVER MAX ROW COUNT
 		{
+			if (row_index >= _sets.size())
+				break;
+
 			int set_index = _set_indices[row_index];//Maps to visible row index
+
+			if (set_index == _sets.size())//Don't try to render past max tile count
+			{
+				continue;
+			}
 			
 			//Render Set Title First
 			render_text(_sets[set_index].name, 45, INIT_TEXT_HEIGHT - text_height_offset, 0.4f, glm::vec3(1.0, 1.0f, 1.0f));
@@ -502,7 +533,7 @@ namespace DSS
 				if (column_index >= _sets[row_index].tiles.size())
 					break;
 
-				int tile_index = _set_to_indices_map[set_index][column_index];
+				int tile_index = _set_to_tile_indices_map[set_index][column_index];
 
 				if (tile_index == _sets[set_index].tiles.size())//Don't try to render past max tile count
 				{
@@ -651,10 +682,10 @@ namespace DSS
 	{
 		if (pos.y == COLUMNS_LEFT_BOUNDARY_Y)
 		{
-			if (_set_to_indices_map[_currently_selected_set].front() == COLUMNS_LEFT_BOUNDARY_Y)
+			if (_set_to_tile_indices_map[_currently_selected_set].front() == COLUMNS_LEFT_BOUNDARY_Y)
 				return;
 
-			for (auto& tile_index : _set_to_indices_map[_currently_selected_set])
+			for (auto& tile_index : _set_to_tile_indices_map[_currently_selected_set])
 			{
 				--tile_index;
 			}
@@ -663,10 +694,10 @@ namespace DSS
 		{
 			int current_tile_count = _sets[_currently_selected_set].tiles.size();
 
-			if (_set_to_indices_map[_currently_selected_set].back() == current_tile_count)
+			if (_set_to_tile_indices_map[_currently_selected_set].back() == current_tile_count)
 				return;
 
-			for (auto& tile_index : _set_to_indices_map[_currently_selected_set])
+			for (auto& tile_index : _set_to_tile_indices_map[_currently_selected_set])
 			{
 				++tile_index;
 			}
@@ -695,26 +726,26 @@ namespace DSS
 		}
 		else if (pos.x == ROWS_LOWER_BOUNDARY_X)
 		{
-			consume_ref_set();
+			consume_ref_set();//
 			
 			auto current_set_count = _sets.size();//NOTE!! This collection's size will increase dynamically during runtime. Keep that in mind!!!
 
 			//If last index in set of generated set indices is equal to last index available for sets, do not update indices collection.
-			if (_set_indices[MAX_ROWS_RENDERED - 1] == ((current_set_count) - 1))//DON'T UPDATE FRAME!!!
+			if (_set_indices[MAX_ROWS_RENDERED - 1] == ((current_set_count)))// - 1))//DON'T UPDATE FRAME!!!
 				return;
 
 			for (int row_index = 0; row_index < MAX_ROWS_RENDERED; ++row_index)
 			{
 				unsigned int new_set_index = _set_indices[row_index] + 1;
-				if (new_set_index >= current_set_count)//new index out of range of current row //DON'T ADD INVALID INDEX
+				/*if (new_set_index >= current_set_count)//new index out of range of current row //DON'T ADD INVALID INDEX
 				{
 					return;
 				}
 				else
-				{
+				{*/
 					_set_indices[row_index] = new_set_index;
 					
-				}
+				//}
 			}
 		}
 	}
