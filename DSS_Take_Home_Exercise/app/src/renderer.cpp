@@ -726,7 +726,8 @@ namespace DSS
 		}
 		else if (pos.x == ROWS_LOWER_BOUNDARY_X)
 		{
-			consume_ref_set();//
+			//if (_currently_selected_set == _sets.size() - 1)
+				consume_ref_set();
 			
 			auto current_set_count = _sets.size();//NOTE!! This collection's size will increase dynamically during runtime. Keep that in mind!!!
 
